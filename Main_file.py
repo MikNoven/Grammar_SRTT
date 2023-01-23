@@ -7,82 +7,225 @@ Main file of the Grammar_SRTT experiment.
 """
 
 #%% Import necessary packages.
-from psychopy import gui, monitors
-from psychopy.visual import Window, TextStim
-from psychopy import core
-from psychopy.hardware.keyboard import Keyboard
 import os
+from psychopy import gui
+from psychopy.visual import Window, TextStim, ImageStim, SimpleImageStim
+from psychopy import event, core, monitors, prefs
+prefs.general['audioLib'] = ['pygame']
+import numpy as np
+import Grammar_stimuli as gstim
+from datetime import date
+import pandas as pd
+
+#%% Get subject dialog box
+def subject_dialog(title_text):
+    subj=''
+    exp_info = {'subject': ''}  
+    loopDiag=True
+    while loopDiag:
+        dlg = gui.DlgFromDict(exp_info,title=title_text)
+        
+        if not dlg.OK:
+            controlled_e()
+        else:
+            subj=exp_info['subject']
+            if subj!='':
+                loopDiag=False  
+    return subj
 
 #%% Remove problematic variables and quit 
 def controlled_e():
-    if 'kb' in locals():
+    if 'kb' in globals():
+        global kb
         del(kb)
-    if 'keys' in locals():
+    if 'keys' in globals():
+        global keys
         del(keys)
-    if 'welcome_on' in locals():
-        del(welcome_on)
-    if 'win' in locals():
+    if 'win' in globals():
+        global win
+        win.close()
         del(win)
-    if 'loopDiag' in locals():
+    if 'loopDiag' in globals():
+        global loopDiag
         del(loopDiag)
+    if 'clock' in globals():
+        global clock
+        del(clock)
     core.quit()
 
-#%% Gather subject information and make sure that the subject name is set. 
-exp_info = {'subject': ''}  
-loopDiag=True
-while loopDiag:
-    dlg = gui.DlgFromDict(exp_info)
-    
-    if not dlg.OK:
-        controlled_e()
+#%% Get names of stimulus images. 
+def get_stim_image(key):
+    if key == 's':
+        img_path = '01.jpg'
+    elif key == 'd':
+        img_path = '02.jpg'
+    elif key == 'f':
+        img_path = '03.jpg'
+    elif key == 'j':
+        img_path = '04.jpg'
+    elif key == 'k':
+        img_path = '05.jpg'
+    elif key == 'l':
+        img_path = '06.jpg'
+        
+    return img_path
+
+#%% Make a save folder with date stamp
+def make_savefolder(save_path, subj):
+    savefolder = os.path.join(save_path,subj+'_'+date.today().isoformat())
+    if os.path.exists(savefolder):
+        savefolder = "error"
     else:
-        subj=exp_info['subject']
-        if subj!='':
-            loopDiag=False  
-#Can't allow for it to close with pressing enter. 
+        os.makedirs(savefolder)
+    return savefolder
 
 #%% Define the paradigm. 
-nbrOfBlocks = 10
+nbrOfBlocks = 3
 lengthOfSequences = 8 #Number of presses per sequence.
 sequencesPerBlock = 25
+pauseLength = 15 #Pause length in seconds. 
 
 #%% Define the hardware
 mon = monitors.Monitor('SonyG55')
 mon.setSizePix((2560,1600))
+winsize=(1080,720)
+
+#%% Define save path
+save_path = '/Users/gdf724/Data/ReScale/MovementGrammar/GrammarSRTT/' 
+
+#%% Gather subject information and make sure that the subject name is set and make a save folder.
+loop_subjDial=True
+title_text = "Write subject ID"
+while loop_subjDial:
+    subj = subject_dialog(title_text)
+    savefolder = make_savefolder(save_path, subj)
+    if savefolder == "" or savefolder == "error":
+        title_text = "Subject ID already tested today!"
+    else:
+        loop_subjDial = False
+    
+
 
 #%% Initialize Window and make welcome screen.
-welcome_string = "Welcome to the experiment!\nPut your fingers on the target keys on the keyboard.\nPlease press the indicated keys as quickly as possible.\nAre you ready to start?"
-win = Window(size=[800,600],color=(0, 0, 0), colorSpace='rgb', monitor=mon, fullscr=False, screen=0)
-welcome_text = TextStim(win, welcome_string, color=(1, 1, 1), colorSpace='rgb')
+welcome_string = "Welcome to the experiment!\nPut your fingers on the target keys on the keyboard.\nPlease press the indicated keys as quickly as possible.\nAre you ready to start?\nPRESS SPACE BAR TO CONTINUE"
+win = Window(size=winsize, monitor=mon, fullscr=False, screen=0, units="norm", pos=[0,0], color=[-.69,-.69,-.69], colorSpace = 'rgb')
+welcome_text = TextStim(win, welcome_string, pos=(0.0, 0.8), color=(1, 1, 1), units = "norm", height = 0.05, wrapWidth=0.8)
+instr_image_stim = ImageStim(win, image='Instructions_figure.jpeg')
+instr_image_stim.draw()
 welcome_text.draw()
 win.flip()
 #Wait until subject has pressed enter or escape
-kb = Keyboard()
-welcome_on=True
-while welcome_on:
-    keys = kb.getKeys(['return', 'escape'], waitRelease = True)
-    if 'return' in keys: 
-        welcome_on=False
-        pause_text = TextStim(win, "Wait", color=(1, 1, 1), colorSpace='rgb')
-        pause_text.draw()
-        win.flip()
-    if 'escape' in keys:
-        controlled_e()
+#kb = Keyboard()
+keys = event.waitKeys(keyList=['space', 'escape'], clearEvents=True)
+if 'space' in keys: 
+    welcome_on=False
+    pause_text = TextStim(win, "Wait", color=(1, 1, 1), colorSpace='rgb')
+    pause_text.draw()
+    win.flip()
+if 'escape' in keys:
+    controlled_e()
 
-#for block_itr in range(nbrOfBlocks):
-#%% Initialize the experiment.
-#Get sequences for the block. (Separate class.)
-
-#
+#%%Warm up
+#Start with some interactive instructions. E.g. Generate s-d-f-j-k-l. Inform 
+#that participants need to be as quick and accurate as possible. 
+warmup_timings = []
+warmup_responses = []
 clock = core.Clock()
+allowed_keys = ['s', 'd', 'f', 'j', 'k', 'l']
+for key in allowed_keys:
+    #Present correct instruction.
+    trial_img = get_stim_image(key)
+    trial_stim = SimpleImageStim(win, image=trial_img)
+    trial_stim.draw()
+    win.flip()
+    t_wu_start = clock.getTime()
+    
+    #Collect keypress. Right now only allows presses on the correct 
+    response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+    if response[-1] in allowed_keys:
+        warmup_timings.append(clock.getTime()-t_wu_start)
+        warmup_responses.append(response[-1])
+        continue
+    elif 'escape' in keys:
+        controlled_e()
+    
 
-#Wait with "fullscr=True" until I have a way to close the program.
+for block_itr in range(nbrOfBlocks):
+#%% Initialize the experiment.
+    #Get sequences for the block. (Separate class.)
+    block_trials = gstim.getRandomSequences(lengthOfSequences,sequencesPerBlock)
+    # Initialize data save structures.
+    block_RT = np.zeros(len(block_trials))
+    block_response = []
+    block_feedbackGiven = [] #Saves 1 if the subject was too slow or inaccurate.
+    block_accuracy = np.zeros(len(block_trials)) #To keep track of accuracy in the experiment.
+    
 
-t_init = clock.getTime()
-core.wait(2)
-#keys = kb.getKeys()
-#spacebar_pressed = "space" in keys
-win.close()
-t_after = clock.getTime()-t_init
+#%%Run experiment block.
+    acc_check_skips = 0
+    for trial_itr in range(len(block_trials)):
+        trial = block_trials[trial_itr]
+        #Present correct stimulus + measure t_trial_init
+        t_init = clock.getTime()
+        trial_img = get_stim_image(trial)
+        trial_stim = SimpleImageStim(win, image=trial_img)
+        trial_stim.draw()
+        win.flip()
+        #Collect response from the keyboard.
+        response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+        if response[-1] in allowed_keys:
+            block_RT[trial_itr] = clock.getTime()-t_init
+            block_response.append(response[-1])
+            block_accuracy[trial_itr] = int(trial!=response[-1])
+        elif 'escape' in keys:
+            controlled_e()
+
+        #After 30 trials, check that accuracy is above 95% and that average reaction time is below 450 ms. 
+        if acc_check_skips > 0:
+            acc_check_skips = acc_check_skips - 1
+        
+        if trial_itr >= 29:
+            msg_text = ""
+            if np.mean(block_RT[trial_itr-10:trial_itr]) >= 0.8:
+                msg_text = msg_text+"Too slow, please speed up.\n"
+            if sum(block_accuracy[trial_itr-20:trial_itr]) < 17 and acc_check_skips==0:
+                msg_text = msg_text+"Too many inaccuracies. Please pay attention.\n"
+                acc_check_skips=20
+            if not msg_text=="":
+                feedback_text = TextStim(win, msg_text, color=(1, 1, 1), colorSpace='rgb')
+                block_feedbackGiven.append(1)
+                feedback_text.draw()
+                win.flip()
+                core.wait(1.5)
+                
+                
+    #Save block data and save to csv-file.
+    block_save = pd.DataFrame({'trial':block_trials,
+                               'reaction_time':block_RT,
+                               'response':block_response,
+                               'accuracy':block_accuracy}
+        )
+    block_save.to_csv(os.path.join(savefolder,subj+'_block_'+str(block_itr+1)+'.csv')) #Maybe save as pickle instead.
+    #Take a break
+    pause_text="Great job! Take a "+str(pauseLength)+" second break.\n"
+    for pause_itr in range(pauseLength):
+        pause_stim = TextStim(win, pause_text+str(pause_itr+1)+"/"+str(pauseLength), color=(1, 1, 1), colorSpace='rgb')
+        pause_stim.draw()
+        win.flip()
+        core.wait(1)
+    #Should we make them start the next block on their own? 
+#%% End of SRTT message.
+end_text = "Great job! You are now done with this part of the experiment!\nPress space to continue."
+end_stim = TextStim(win, end_text, color=(1, 1, 1), colorSpace='rgb')
+end_stim.draw()
+win.flip()
+response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
+if response[-1]=='space':
+    print('Done.')
+elif 'escape' in keys:
+    controlled_e()
+#%%Generation task.
+
+
 #%% Quit the program
 controlled_e()
