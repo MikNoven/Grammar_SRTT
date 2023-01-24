@@ -83,7 +83,9 @@ def make_savefolder(save_path, subj):
 nbrOfBlocks = 3
 lengthOfSequences = 8 #Number of presses per sequence.
 sequencesPerBlock = 25
-pauseLength = 15 #Pause length in seconds. 
+pause_block_length = 15 #Pause between blocks length in seconds. 
+pause_trial_length = 0.5 #Pause length for pause trials in seconds.
+grammar_type = '8020' #'8020', '5050', or 'random'
 
 #%% Define the hardware
 mon = monitors.Monitor('SonyG55')
@@ -153,7 +155,11 @@ for key in allowed_keys:
 for block_itr in range(nbrOfBlocks):
 #%% Initialize the experiment.
     #Get sequences for the block. (Separate class.)
-    block_trials = gstim.getRandomSequences(lengthOfSequences,sequencesPerBlock)
+    if grammar_type == 'random':
+        block_trials = gstim.getRandomSequences(lengthOfSequences,sequencesPerBlock)
+    else:
+        block_trials = gstim.getGrammarSequences(lengthOfSequences,sequencesPerBlock,\
+                                                 grammar_type,True,savefolder,block_itr+1,subj)
     # Initialize data save structures.
     block_RT = np.zeros(len(block_trials))
     block_response = []
@@ -166,38 +172,49 @@ for block_itr in range(nbrOfBlocks):
     for trial_itr in range(len(block_trials)):
         trial = block_trials[trial_itr]
         #Present correct stimulus + measure t_trial_init
-        t_init = clock.getTime()
-        trial_img = get_stim_image(trial)
-        trial_stim = SimpleImageStim(win, image=trial_img)
-        trial_stim.draw()
-        win.flip()
-        #Collect response from the keyboard.
-        response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
-        if response[-1] in allowed_keys:
-            block_RT[trial_itr] = clock.getTime()-t_init
-            block_response.append(response[-1])
-            block_accuracy[trial_itr] = int(trial!=response[-1])
-        elif 'escape' in keys:
-            controlled_e()
-
-        #After 30 trials, check that accuracy is above 95% and that average reaction time is below 450 ms. 
-        if acc_check_skips > 0:
-            acc_check_skips = acc_check_skips - 1
-        
-        if trial_itr >= 29:
-            msg_text = ""
-            if np.mean(block_RT[trial_itr-10:trial_itr]) >= 0.8:
-                msg_text = msg_text+"Too slow, please speed up.\n"
-            if sum(block_accuracy[trial_itr-20:trial_itr]) < 17 and acc_check_skips==0:
-                msg_text = msg_text+"Too many inaccuracies. Please pay attention.\n"
-                acc_check_skips=20
-            if not msg_text=="":
-                feedback_text = TextStim(win, msg_text, color=(1, 1, 1), colorSpace='rgb')
-                block_feedbackGiven.append(1)
-                feedback_text.draw()
-                win.flip()
-                core.wait(1.5)
-                
+        if trial == 'pause':
+            trial_stim = SimpleImageStim(win, image='00.jpg')
+            trial_stim.draw()
+            win.flip()
+            block_RT[trial_itr] = np.nan
+            block_response.append(np.nan)
+            block_accuracy[trial_itr] = np.nan
+            core.wait(pause_trial_length)
+        else:
+            t_init = clock.getTime()
+            trial_img = get_stim_image(trial)
+            trial_stim = SimpleImageStim(win, image=trial_img)
+            trial_stim.draw()
+            win.flip()
+            #Collect response from the keyboard.
+            response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+            if response[-1] in allowed_keys:
+                block_RT[trial_itr] = clock.getTime()-t_init
+                block_response.append(response[-1])
+                block_accuracy[trial_itr] = int(trial!=response[-1])
+            elif 'escape' in keys:
+                controlled_e()
+    
+            #After 30 trials, check that accuracy is above 95% and that average reaction time is below 450 ms. 
+            if acc_check_skips > 0:
+                acc_check_skips = acc_check_skips - 1
+            
+            if trial_itr >= 29:
+                msg_text = ""
+                acc_check = block_accuracy[trial_itr-20:trial_itr]
+                acc_check = acc_check[~np.isnan(acc_check)]
+                if np.nanmean(block_RT[trial_itr-10:trial_itr]) >= 0.8:
+                    msg_text = msg_text+"Too slow, please speed up.\n"
+                if sum(acc_check)/len(acc_check) < 0.8 and acc_check_skips==0:
+                    msg_text = msg_text+"Too many inaccuracies. Please pay attention.\n"
+                    acc_check_skips=20
+                if not msg_text=="":
+                    feedback_text = TextStim(win, msg_text, color=(1, 1, 1), colorSpace='rgb')
+                    block_feedbackGiven.append(1)
+                    feedback_text.draw()
+                    win.flip()
+                    core.wait(1.5)
+                    
                 
     #Save block data and save to csv-file.
     block_save = pd.DataFrame({'trial':block_trials,
@@ -207,12 +224,13 @@ for block_itr in range(nbrOfBlocks):
         )
     block_save.to_csv(os.path.join(savefolder,subj+'_block_'+str(block_itr+1)+'.csv')) #Maybe save as pickle instead.
     #Take a break
-    pause_text="Great job! Take a "+str(pauseLength)+" second break.\n"
-    for pause_itr in range(pauseLength):
-        pause_stim = TextStim(win, pause_text+str(pause_itr+1)+"/"+str(pauseLength), color=(1, 1, 1), colorSpace='rgb')
-        pause_stim.draw()
-        win.flip()
-        core.wait(1)
+    if block_itr < nbrOfBlocks-1:
+        pause_text="Great job! Take a "+str(pause_block_length)+" second break.\n"
+        for pause_itr in range(pause_block_length):
+            pause_stim = TextStim(win, pause_text+str(pause_itr+1)+"/"+str(pause_block_length), color=(1, 1, 1), colorSpace='rgb')
+            pause_stim.draw()
+            win.flip()
+            core.wait(1)
     #Should we make them start the next block on their own? 
 #%% End of SRTT message.
 end_text = "Great job! You are now done with this part of the experiment!\nPress space to continue."
