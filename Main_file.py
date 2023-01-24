@@ -80,12 +80,16 @@ def make_savefolder(save_path, subj):
     return savefolder
 
 #%% Define the paradigm. 
+#SRTT
 nbrOfBlocks = 3
 lengthOfSequences = 8 #Number of presses per sequence.
 sequencesPerBlock = 25
 pause_block_length = 15 #Pause between blocks length in seconds. 
 pause_trial_length = 0.5 #Pause length for pause trials in seconds.
 grammar_type = '8020' #'8020', '5050', or 'random'
+
+#Generation task
+nbrOfGeneratedSequences = 10
 
 #%% Define the hardware
 mon = monitors.Monitor('SonyG55')
@@ -180,6 +184,21 @@ for block_itr in range(nbrOfBlocks):
             block_response.append(np.nan)
             block_accuracy[trial_itr] = np.nan
             core.wait(pause_trial_length)
+            if trial_itr >= 29:
+                msg_text = ""
+                acc_check = block_accuracy[trial_itr-20:trial_itr]
+                acc_check = acc_check[~np.isnan(acc_check)]
+                if np.nanmean(block_RT[trial_itr-10:trial_itr]) >= 0.8:
+                    msg_text = msg_text+"Too slow, please speed up.\n"
+                if sum(acc_check)/len(acc_check) < 0.7 and acc_check_skips==0:
+                    msg_text = msg_text+"Too many inaccuracies. Please pay attention.\n"
+                    acc_check_skips=20
+                if not msg_text=="":
+                    feedback_text = TextStim(win, msg_text, color=(1, 1, 1), colorSpace='rgb')
+                    block_feedbackGiven.append(1)
+                    feedback_text.draw()
+                    win.flip()
+                    core.wait(1.5)
         else:
             t_init = clock.getTime()
             trial_img = get_stim_image(trial)
@@ -198,22 +217,6 @@ for block_itr in range(nbrOfBlocks):
             #After 30 trials, check that accuracy is above 95% and that average reaction time is below 450 ms. 
             if acc_check_skips > 0:
                 acc_check_skips = acc_check_skips - 1
-            
-            if trial_itr >= 29:
-                msg_text = ""
-                acc_check = block_accuracy[trial_itr-20:trial_itr]
-                acc_check = acc_check[~np.isnan(acc_check)]
-                if np.nanmean(block_RT[trial_itr-10:trial_itr]) >= 0.8:
-                    msg_text = msg_text+"Too slow, please speed up.\n"
-                if sum(acc_check)/len(acc_check) < 0.8 and acc_check_skips==0:
-                    msg_text = msg_text+"Too many inaccuracies. Please pay attention.\n"
-                    acc_check_skips=20
-                if not msg_text=="":
-                    feedback_text = TextStim(win, msg_text, color=(1, 1, 1), colorSpace='rgb')
-                    block_feedbackGiven.append(1)
-                    feedback_text.draw()
-                    win.flip()
-                    core.wait(1.5)
                     
                 
     #Save block data and save to csv-file.
@@ -239,11 +242,117 @@ end_stim.draw()
 win.flip()
 response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
 if response[-1]=='space':
-    print('Done.')
+    print('SRTT done.')
 elif 'escape' in keys:
     controlled_e()
-#%%Generation task.
+    
+#%%Generation task intialization.
+gentest_start_text = "In the previous part of the experiment,\nthe cues were presented in sequences\nthat came from a system.\nPress space to continue."
+gentest_start_stim = TextStim(win, gentest_start_text, color=(1, 1, 1), colorSpace='rgb')
+gentest_start_stim.draw()
+win.flip()
+response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
+if response[-1]=='space':
+    print('First gentest text done.')
+elif 'escape' in keys:
+    controlled_e()
+
+#%%Generation task grammatical.
+gentest_grammar_text = "We now ask you to freely generate "+str(nbrOfGeneratedSequences)+" sequences\nfrom that system.\nPress space to continue."
+gentest_grammar_stim = TextStim(win, gentest_grammar_text, color=(1, 1, 1), colorSpace='rgb')
+gentest_grammar_stim.draw()
+win.flip()
+response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
+if response[-1]=='space':
+    print('Generation task grammar.')
+elif 'escape' in keys:
+    controlled_e()
+
+#Start with empty and then show the pressed key image 
+gen_time = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
+gen_response = []
+for gen_itr in range(nbrOfGeneratedSequences):
+    gen_seq_text="Sequence "+str(gen_itr+1)+" of "+str(nbrOfGeneratedSequences)
+    gen_seq_text_stim = TextStim(win, gen_seq_text, color=(1, 1, 1), colorSpace='rgb')
+    gen_seq_text_stim.draw()
+    win.flip()
+    core.wait(1)
+    gen_seq = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
+    genStim = SimpleImageStim(win, image='00.jpg')
+    genStim.draw()
+    win.flip()
+    for seq_itr in range(lengthOfSequences):
+        t_init = clock.getTime()
+        response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+        if response[-1] in allowed_keys:
+            gen_time[seq_itr+lengthOfSequences*gen_itr] = clock.getTime()-t_init
+            gen_response.append(response[-1])
+            gen_seq[seq_itr+lengthOfSequences*gen_itr] = seq_itr+1
+            
+            gen_img = get_stim_image(response[-1])
+            genStim = SimpleImageStim(win, image=gen_img)
+            genStim.draw()
+            win.flip()
+        elif 'escape' in keys:
+            controlled_e()
+#Save the information. 
+gen_gram_save = pd.DataFrame({'sequence':gen_seq,
+                           'generation_time':gen_time,
+                           'response':gen_response}
+    )
+gen_gram_save.to_csv(os.path.join(savefolder,subj+'_generation_grammatical.csv')) #Maybe save as pickle instead.
 
 
-#%% Quit the program
+#%%Generation task random.
+gentest_random_text = "We now ask you to freely generate "+str(nbrOfGeneratedSequences)+" sequences\nthat you are sure is not\nfrom that sequence.\nYou are not allowed to press the same key twice in a row.\nPress space to continue."
+gentest_random_stim = TextStim(win, gentest_random_text, color=(1, 1, 1), colorSpace='rgb')
+gentest_random_stim.draw()
+win.flip()
+response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
+if response[-1]=='space':
+    print('Generation task random.')
+elif 'escape' in keys:
+    controlled_e()
+
+#Start with empty and then show the pressed key image 
+gen_time = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
+gen_response = []
+for gen_itr in range(nbrOfGeneratedSequences):
+    gen_seq_text="Sequence "+str(gen_itr+1)+" of "+str(nbrOfGeneratedSequences)
+    gen_seq_text_stim = TextStim(win, gen_seq_text, color=(1, 1, 1), colorSpace='rgb')
+    gen_seq_text_stim.draw()
+    win.flip()
+    core.wait(1)
+    gen_seq = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
+    genStim = SimpleImageStim(win, image='00.jpg')
+    genStim.draw()
+    win.flip()
+    for seq_itr in range(lengthOfSequences):
+        t_init = clock.getTime()
+        response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+        if response[-1] in allowed_keys:
+            gen_time[seq_itr+lengthOfSequences*gen_itr] = clock.getTime()-t_init
+            gen_response.append(response[-1])
+            gen_seq[seq_itr+lengthOfSequences*gen_itr] = seq_itr+1
+            
+            gen_img = get_stim_image(response[-1])
+            genStim = SimpleImageStim(win, image=gen_img)
+            genStim.draw()
+            win.flip()
+        elif 'escape' in keys:
+            controlled_e()
+#Save the information. 
+gen_rand_save = pd.DataFrame({'sequence':gen_seq,
+                           'generation_time':gen_time,
+                           'response':gen_response}
+    )
+gen_rand_save.to_csv(os.path.join(savefolder,subj+'_generation_grammatical.csv')) #Maybe save as pickle instead.
+
+
+#%% Thank the participant and quit the program
+end_of_experiment_text = "Thank you for participating in our experiment!"
+end_of_experiment_stim = TextStim(win, end_of_experiment_text, color=(1, 1, 1), colorSpace='rgb')
+end_of_experiment_stim.draw()
+win.flip()
+core.wait(3)
 controlled_e()
