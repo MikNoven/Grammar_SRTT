@@ -278,13 +278,13 @@ elif 'escape' in keys:
 #Start with empty and then show the pressed key image 
 gen_time = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
 gen_response = []
+gen_seq = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
 for gen_itr in range(nbrOfGeneratedSequences):
     gen_seq_text="Sequence "+str(gen_itr+1)+" of "+str(nbrOfGeneratedSequences)
     gen_seq_text_stim = TextStim(win, gen_seq_text, color=(1, 1, 1), colorSpace='rgb')
     gen_seq_text_stim.draw()
     win.flip()
     core.wait(1)
-    gen_seq = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
     genStim = SimpleImageStim(win, image='00.jpg')
     genStim.draw()
     win.flip()
@@ -294,7 +294,7 @@ for gen_itr in range(nbrOfGeneratedSequences):
         if response[-1] in allowed_keys:
             gen_time[seq_itr+lengthOfSequences*gen_itr] = clock.getTime()-t_init
             gen_response.append(response[-1])
-            gen_seq[seq_itr+lengthOfSequences*gen_itr] = seq_itr+1
+            gen_seq[seq_itr+lengthOfSequences*gen_itr] = gen_itr+1
             
             genStim = SimpleImageStim(win, image=img_paths[response[-1]])
             genStim.draw()
@@ -323,13 +323,13 @@ elif 'escape' in keys:
 #Start with empty and then show the pressed key image 
 gen_time = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
 gen_response = []
+gen_seq = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
 for gen_itr in range(nbrOfGeneratedSequences):
     gen_seq_text="Sequence "+str(gen_itr+1)+" of "+str(nbrOfGeneratedSequences)
     gen_seq_text_stim = TextStim(win, gen_seq_text, color=(1, 1, 1), colorSpace='rgb')
     gen_seq_text_stim.draw()
     win.flip()
     core.wait(1)
-    gen_seq = np.zeros(nbrOfGeneratedSequences*lengthOfSequences)
     genStim = SimpleImageStim(win, image='00.jpg')
     genStim.draw()
     win.flip()
@@ -339,7 +339,7 @@ for gen_itr in range(nbrOfGeneratedSequences):
         if response[-1] in allowed_keys:
             gen_time[seq_itr+lengthOfSequences*gen_itr] = clock.getTime()-t_init
             gen_response.append(response[-1])
-            gen_seq[seq_itr+lengthOfSequences*gen_itr] = seq_itr+1
+            gen_seq[seq_itr+lengthOfSequences*gen_itr] = gen_itr+1
             
             genStim = SimpleImageStim(win, image=img_paths[response[-1]])
             genStim.draw()
