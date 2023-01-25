@@ -13,10 +13,16 @@ import itertools
 import os
 
 #%% Global variables
-cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
+cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
 
 #%% Random Sequences
-def getRandomSequences(lengthOfSequences,sequencesPerBlock):
+def getRandomSequences(lengthOfSequences,sequencesPerBlock,cedrus_RB840):
+    global cue_positions
+    if cedrus_RB840:
+        cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
+    else:
+        cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
+        
     block_stim = []
     block_stim.append(cue_positions[random.randrange(0,len(cue_positions)-1)])
     for itr in range(lengthOfSequences*sequencesPerBlock-1):
@@ -126,21 +132,23 @@ def characterize_grammar_block(block_stim,grammar,grammar_type,save_path,block_n
 #%% Grammar Sequencs
 """
 Code for generating SRTT sequences with 6 visual cue positions corresponding to 
-index, middle, or ring finger on either hand according to below:
-    s=left ring finger
-    d=left middle finger
-    f=left index finger
-    j=right index finger
-    k=right middle finger
-    l=right ring finger
+index, middle, or ring finger on either hand.
 grammar_type is either '8020' or '5050'.
 """
-def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,characterize_block,save_path,block_nbr,subject):
+def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,characterize_block,save_path,block_nbr,subject,cedrus_RB840):
+    global cue_positions
+    if cedrus_RB840:
+        cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
+        start_stim = 'c'
+    else:
+        cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
+        start_stim = 'f'
+      
     block_stim = []
     grammar = getGrammar(grammar_type)
     
     for seq_itr in range(sequencesPerBlock):
-        prev_element = 'f'
+        prev_element = start_stim
         block_stim.append(prev_element)
         for stim_itr in range(lengthOfSequences-1):
             tmp_choice = random.choices(cue_positions, weights=grammar.iloc[cue_positions.index(prev_element)])[0]

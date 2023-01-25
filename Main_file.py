@@ -53,23 +53,6 @@ def controlled_e():
         del(clock)
     core.quit()
 
-#%% Get names of stimulus images. 
-def get_stim_image(key):
-    if key == 's':
-        img_path = '01.jpg'
-    elif key == 'd':
-        img_path = '02.jpg'
-    elif key == 'f':
-        img_path = '03.jpg'
-    elif key == 'j':
-        img_path = '04.jpg'
-    elif key == 'k':
-        img_path = '05.jpg'
-    elif key == 'l':
-        img_path = '06.jpg'
-        
-    return img_path
-
 #%% Make a save folder with date stamp
 def make_savefolder(save_path, subj):
     savefolder = os.path.join(save_path,subj+'_'+date.today().isoformat())
@@ -79,22 +62,48 @@ def make_savefolder(save_path, subj):
         os.makedirs(savefolder)
     return savefolder
 
+#%% Define the hardware
+cedrus_RB840 = True #Whether to use Cedrus or keyboard. (affects which buttons to use.)
+mon = monitors.Monitor('SonyG55')
+mon.setSizePix((2560,1600))
+winsize=(1080,720)
+
+if cedrus_RB840:
+    allowed_keys = ['a', 'b', 'c', 'f', 'g', 'h']
+    continue_keys = ['d', 'e']
+    continue_key_name = "one of the bottom keys"
+    img_paths = {
+        "a": "01.jpg",
+        "b": "02.jpg",
+        "c": "03.jpg",
+        "f": "04.jpg",
+        "g": "05.jpg",
+        "h": "06.jpg"
+        }
+else:
+    allowed_keys = ['s', 'd', 'f', 'j', 'k', 'l']
+    continue_keys = ['space']
+    continue_key_name = "space bar"
+    img_paths = {
+        "s": "01.jpg",
+        "d": "02.jpg",
+        "f": "03.jpg",
+        "j": "04.jpg",
+        "k": "05.jpg",
+        "l": "06.jpg"
+        }
+
 #%% Define the paradigm. 
 #SRTT
 nbrOfBlocks = 3
 lengthOfSequences = 8 #Number of presses per sequence.
-sequencesPerBlock = 25
+sequencesPerBlock = 5
 pause_block_length = 15 #Pause between blocks length in seconds. 
 pause_trial_length = 0.5 #Pause length for pause trials in seconds.
 grammar_type = '8020' #'8020', '5050', or 'random'
 
 #Generation task
-nbrOfGeneratedSequences = 10
-
-#%% Define the hardware
-mon = monitors.Monitor('SonyG55')
-mon.setSizePix((2560,1600))
-winsize=(1080,720)
+nbrOfGeneratedSequences = 3
 
 #%% Define save path
 save_path = '/Users/gdf724/Data/ReScale/MovementGrammar/GrammarSRTT/' 
@@ -113,7 +122,7 @@ while loop_subjDial:
 
 
 #%% Initialize Window and make welcome screen.
-welcome_string = "Welcome to the experiment!\nPut your fingers on the target keys on the keyboard.\nPlease press the indicated keys as quickly as possible.\nAre you ready to start?\nPRESS SPACE BAR TO CONTINUE"
+welcome_string = "Welcome to the experiment!\nPut your fingers on the target keys on the keyboard.\nPlease press the indicated keys as quickly as possible.\nAre you ready to start?\nPress "+continue_key_name+" to continue"
 win = Window(size=winsize, monitor=mon, fullscr=False, screen=0, units="norm", pos=[0,0], color=[-.69,-.69,-.69], colorSpace = 'rgb')
 welcome_text = TextStim(win, welcome_string, pos=(0.0, 0.8), color=(1, 1, 1), units = "norm", height = 0.05, wrapWidth=0.8)
 instr_image_stim = ImageStim(win, image='Instructions_figure.jpeg')
@@ -122,13 +131,13 @@ welcome_text.draw()
 win.flip()
 #Wait until subject has pressed enter or escape
 #kb = Keyboard()
-keys = event.waitKeys(keyList=['space', 'escape'], clearEvents=True)
-if 'space' in keys: 
+response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents=True)
+if response[-1] in continue_keys: 
     welcome_on=False
     pause_text = TextStim(win, "Wait", color=(1, 1, 1), colorSpace='rgb')
     pause_text.draw()
     win.flip()
-if 'escape' in keys:
+if 'escape' in response:
     controlled_e()
 
 #%%Warm up
@@ -137,17 +146,16 @@ if 'escape' in keys:
 warmup_timings = []
 warmup_responses = []
 clock = core.Clock()
-allowed_keys = ['s', 'd', 'f', 'j', 'k', 'l']
+
 for key in allowed_keys:
     #Present correct instruction.
-    trial_img = get_stim_image(key)
-    trial_stim = SimpleImageStim(win, image=trial_img)
+    trial_stim = SimpleImageStim(win, image=img_paths[key])
     trial_stim.draw()
     win.flip()
     t_wu_start = clock.getTime()
     
     #Collect keypress. Right now only allows presses on the correct 
-    response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+    response = event.waitKeys(keyList=allowed_keys+['escape'], clearEvents = True)
     if response[-1] in allowed_keys:
         warmup_timings.append(clock.getTime()-t_wu_start)
         warmup_responses.append(response[-1])
@@ -160,10 +168,10 @@ for block_itr in range(nbrOfBlocks):
 #%% Initialize the experiment.
     #Get sequences for the block. (Separate class.)
     if grammar_type == 'random':
-        block_trials = gstim.getRandomSequences(lengthOfSequences,sequencesPerBlock)
+        block_trials = gstim.getRandomSequences(lengthOfSequences,sequencesPerBlock,cedrus_RB840)
     else:
         block_trials = gstim.getGrammarSequences(lengthOfSequences,sequencesPerBlock,\
-                                                 grammar_type,True,savefolder,block_itr+1,subj)
+                                                 grammar_type,True,savefolder,block_itr+1,subj,cedrus_RB840)
     # Initialize data save structures.
     block_RT = np.zeros(len(block_trials))
     block_response = []
@@ -201,12 +209,11 @@ for block_itr in range(nbrOfBlocks):
                     core.wait(1.5)
         else:
             t_init = clock.getTime()
-            trial_img = get_stim_image(trial)
-            trial_stim = SimpleImageStim(win, image=trial_img)
+            trial_stim = SimpleImageStim(win, image=img_paths[trial])
             trial_stim.draw()
             win.flip()
             #Collect response from the keyboard.
-            response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+            response = event.waitKeys(keyList=allowed_keys+['escape'], clearEvents = True)
             if response[-1] in allowed_keys:
                 block_RT[trial_itr] = clock.getTime()-t_init
                 block_response.append(response[-1])
@@ -236,34 +243,34 @@ for block_itr in range(nbrOfBlocks):
             core.wait(1)
     #Should we make them start the next block on their own? 
 #%% End of SRTT message.
-end_text = "Great job! You are now done with this part of the experiment!\nPress space to continue."
+end_text = "Great job! You are now done with this part of the experiment!\nPress "+continue_key_name+" to continue."
 end_stim = TextStim(win, end_text, color=(1, 1, 1), colorSpace='rgb')
 end_stim.draw()
 win.flip()
-response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
-if response[-1]=='space':
+response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents = True)
+if response[-1] in continue_keys:
     print('SRTT done.')
 elif 'escape' in keys:
     controlled_e()
     
 #%%Generation task intialization.
-gentest_start_text = "In the previous part of the experiment,\nthe cues were presented in sequences\nthat came from a system.\nPress space to continue."
+gentest_start_text = "In the previous part of the experiment,\nthe cues were presented in sequences\nthat came from a system.\nPress "+continue_key_name+" to continue."
 gentest_start_stim = TextStim(win, gentest_start_text, color=(1, 1, 1), colorSpace='rgb')
 gentest_start_stim.draw()
 win.flip()
-response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
-if response[-1]=='space':
+response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents = True)
+if response[-1] in continue_keys:
     print('First gentest text done.')
 elif 'escape' in keys:
     controlled_e()
 
 #%%Generation task grammatical.
-gentest_grammar_text = "We now ask you to freely generate "+str(nbrOfGeneratedSequences)+" sequences\nfrom that system.\nPress space to continue."
+gentest_grammar_text = "We now ask you to freely generate "+str(nbrOfGeneratedSequences)+" sequences\nfrom that system.\nPress "+continue_key_name+" to continue."
 gentest_grammar_stim = TextStim(win, gentest_grammar_text, color=(1, 1, 1), colorSpace='rgb')
 gentest_grammar_stim.draw()
 win.flip()
-response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
-if response[-1]=='space':
+response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents = True)
+if response[-1] in continue_keys:
     print('Generation task grammar.')
 elif 'escape' in keys:
     controlled_e()
@@ -283,14 +290,13 @@ for gen_itr in range(nbrOfGeneratedSequences):
     win.flip()
     for seq_itr in range(lengthOfSequences):
         t_init = clock.getTime()
-        response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+        response = event.waitKeys(keyList=allowed_keys+['escape'], clearEvents = True)
         if response[-1] in allowed_keys:
             gen_time[seq_itr+lengthOfSequences*gen_itr] = clock.getTime()-t_init
             gen_response.append(response[-1])
             gen_seq[seq_itr+lengthOfSequences*gen_itr] = seq_itr+1
             
-            gen_img = get_stim_image(response[-1])
-            genStim = SimpleImageStim(win, image=gen_img)
+            genStim = SimpleImageStim(win, image=img_paths[response[-1]])
             genStim.draw()
             win.flip()
         elif 'escape' in keys:
@@ -304,12 +310,12 @@ gen_gram_save.to_csv(os.path.join(savefolder,subj+'_generation_grammatical.csv')
 
 
 #%%Generation task random.
-gentest_random_text = "We now ask you to freely generate "+str(nbrOfGeneratedSequences)+" sequences\nthat you are sure is not\nfrom that sequence.\nYou are not allowed to press the same key twice in a row.\nPress space to continue."
+gentest_random_text = "We now ask you to freely generate "+str(nbrOfGeneratedSequences)+" sequences\nthat you are sure is not\nfrom that sequence.\nYou are not allowed to press the same key twice in a row.\nPress "+continue_key_name+" to continue."
 gentest_random_stim = TextStim(win, gentest_random_text, color=(1, 1, 1), colorSpace='rgb')
 gentest_random_stim.draw()
 win.flip()
-response = event.waitKeys(keyList=['space','escape'], clearEvents = True)
-if response[-1]=='space':
+response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents = True)
+if response[-1] in continue_keys:
     print('Generation task random.')
 elif 'escape' in keys:
     controlled_e()
@@ -329,14 +335,13 @@ for gen_itr in range(nbrOfGeneratedSequences):
     win.flip()
     for seq_itr in range(lengthOfSequences):
         t_init = clock.getTime()
-        response = event.waitKeys(keyList=['s', 'd', 'f', 'j', 'k', 'l','escape'], clearEvents = True)
+        response = event.waitKeys(keyList=allowed_keys+['escape'], clearEvents = True)
         if response[-1] in allowed_keys:
             gen_time[seq_itr+lengthOfSequences*gen_itr] = clock.getTime()-t_init
             gen_response.append(response[-1])
             gen_seq[seq_itr+lengthOfSequences*gen_itr] = seq_itr+1
             
-            gen_img = get_stim_image(response[-1])
-            genStim = SimpleImageStim(win, image=gen_img)
+            genStim = SimpleImageStim(win, image=img_paths[response[-1]])
             genStim.draw()
             win.flip()
         elif 'escape' in keys:
