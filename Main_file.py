@@ -63,7 +63,7 @@ def make_savefolder(save_path, subj):
     return savefolder
 
 #%% Define the hardware
-cedrus_RB840 = True #Whether to use Cedrus or keyboard. (affects which buttons to use.)
+cedrus_RB840 = False #Whether to use Cedrus or keyboard. (affects which buttons to use.)
 mon = monitors.Monitor('SonyG55')
 mon.setSizePix((2560,1600))
 winsize=(1080,720)
@@ -217,7 +217,7 @@ for block_itr in range(nbrOfBlocks):
             if response[-1] in allowed_keys:
                 block_RT[trial_itr] = clock.getTime()-t_init
                 block_response.append(response[-1])
-                block_accuracy[trial_itr] = int(trial!=response[-1])
+                block_accuracy[trial_itr] = int(trial==response[-1])
             elif 'escape' in keys:
                 controlled_e()
     
@@ -351,7 +351,7 @@ gen_rand_save = pd.DataFrame({'sequence':gen_seq,
                            'generation_time':gen_time,
                            'response':gen_response}
     )
-gen_rand_save.to_csv(os.path.join(savefolder,subj+'_generation_grammatical.csv')) #Maybe save as pickle instead.
+gen_rand_save.to_csv(os.path.join(savefolder,subj+'_generation_random.csv')) #Maybe save as pickle instead.
 
 
 #%% Thank the participant and quit the program

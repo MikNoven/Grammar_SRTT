@@ -126,7 +126,7 @@ def characterize_grammar_block(block_stim,grammar,grammar_type,save_path,block_n
     save_pkl['adjacency_matrix'] =  [trans_prob/trans_dn]
     save_pkl['triplets'] =  [triplets]
     save_pkl['triplet_probability'] =  [triplet_freq/trip_dn] 
-    save_pkl.to_pickle(os.path.join(save_path,subject+'_block_'+str(block_nbr)+'.pkl'))
+    save_pkl.to_pickle(os.path.join(save_path,subject+'_sequence_block_'+str(block_nbr)+'.pkl'))
 
 
 #%% Grammar Sequencs
