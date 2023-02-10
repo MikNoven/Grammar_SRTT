@@ -106,7 +106,7 @@ grammar_type = '8020' #'8020', '5050', or 'random'
 nbrOfGeneratedSequences = 3
 
 #%% Define save path
-save_path = '/Users/gdf724/Data/ReScale/MovementGrammar/GrammarSRTT/' 
+save_path = '/Users/gdf724/Data/MovementGrammar/GrammarSRTT/' 
 
 #%% Gather subject information and make sure that the subject name is set and make a save folder.
 loop_subjDial=True

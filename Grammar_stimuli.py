@@ -2,7 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jan 23 10:39:39 2023
-Script for generating stimlus sequences for Grammar SRTT.
+Script for generating stimulus sequences for Grammar SRTT and characterizing them.
+-Triplet weight
+-Hand shift weight
+-(starting finger)
+-Actual distribution of transitions (in relation to theoretical probabilities)
+-Distribution of ending cues/responses in sequences
+-Distribution of failed responses. As in which transitions are failed most, and was the response the other possible one
 @author: gdf724
 """
 #%% Import packages.
@@ -93,6 +99,14 @@ def calcGramScore(block_stim,grammar):
             score = score + grammar[stim][block_stim[stim_itr-1]]
             
     return gramScore
+
+#%% Calculate grammaticality score for sequence
+def calcGramScore_seq(seq_stim,grammar):
+    gramscore = 0
+    for stim_itr in range(1,len(seq_stim)):
+        stim = seq_stim[stim_itr]
+        gramscore += grammar[stim][seq_stim[stim_itr-1]]
+    return gramscore
 
     
 #%% Define and print figure of grammar
