@@ -66,6 +66,7 @@ def handShifted(prev,curr,allowed_keys):
 datapath='/Users/gdf724/Data/MovementGrammar/GrammarSRTT/'
 subj = 'HenrikC1'
 allowed_keys = ['a', 'b', 'c', 'f', 'g', 'h']
+start_keys = ['c'] #What keys are allowed start keys. 
 grammar_type = '8020' #or '5050'
 sequence_lengths = 8 #Number of elements in each sequence in the SRTT
 
@@ -79,7 +80,7 @@ trial = []
 RT = []
 response = []
 accuracy = []
-sequence = [] 
+sequence = []
 #trial,reaction_time,response,accuracy
 
 session = glob.glob(os.path.join(datapath, subj+'*')) #For now assume all are in one session or that the number changes.
@@ -109,6 +110,8 @@ sequence_position = []
 cummulative_probability_prompted = [] #A measure of "grammaticality" of sequence.
 cummulative_probability_response = [] #A measure of "grammaticality" of sequence.
 correctness_wrong_response = [] #The probability of the incorrect response, given the grammar.
+cue_trans_prob = [] #Save the transitional probability for each transition.
+response_prob = [] #If it could was the other correct response given the grammar.
 
 tmp_sequence = 0
 seq_indx = 0
@@ -133,6 +136,11 @@ for itr in range(len(RT)):
         tmp_sequence = sequence[itr]
         seq_indx = itr
         sequence_counter = 1
+        cue_trans_prob.append(1/len(start_keys))
+        if response[itr] in start_keys:
+            response_prob.append(1/len(start_keys))
+        else:
+            response_prob.append(0)
     else:
         hand_shift.append(int(handShifted(trial[itr-1],trial[itr],allowed_keys)))
         sequence_counter += 1
@@ -145,7 +153,9 @@ for itr in range(len(RT)):
     if accuracy[itr] == 0:
         wrong_response_matrix[trial[itr]][response[itr]]+=1
     if itr > seq_indx:
+        response_prob.append(grammar[response[itr]][trial[itr-1]])
         response_matrix_prompt[response[itr]][trial[itr-1]]+=1
+        cue_trans_prob.append(grammar[trial[itr]][trial[itr-1]])
         response_matrix_response[response[itr]][response[itr-1]]+=1
         trial_matrix[trial[itr]][trial[itr-1]]+=1
         if accuracy[itr] == 0:
@@ -202,7 +212,7 @@ for blocknbr in block_set:
 seq_info_df = pd.DataFrame(list(map(list, zip(*[block_seq,seq_seq,cummulative_probability_prompted,cummulative_probability_response,starting_finger,last_cue]))),columns = ['block', 'sequence', 'cummulative_probability_cue', 'cummulative_probability_response', 'start_cue', 'last_cue'])
 seq_info_df.to_csv(os.path.join(sess_save_path,'SRTT_sequence_info.csv'), index = False)
 
-alltrial_df = pd.DataFrame(list(map(list, zip(*[block,sequence,sequence_position,trial,response,accuracy,RT,hand_shift]))), columns = ['block', 'sequence', 'sequence_position', 'correct', 'response', 'accuracy', 'RT', 'hand_shift'])
+alltrial_df = pd.DataFrame(list(map(list, zip(*[block,sequence,sequence_position,trial,response,accuracy,response_prob,RT,cue_trans_prob,hand_shift]))), columns = ['block', 'sequence', 'sequence_position', 'correct', 'response', 'accuracy', 'response_prob', 'RT', 'cue_probability', 'hand_shift'])
 alltrial_df.to_csv(os.path.join(sess_save_path,'SRTT_alltrial_info.csv'), index = False)
 
                     
