@@ -88,7 +88,7 @@ session = session[0]
 filelist = glob.glob(os.path.join(session,subj+'_block_*.csv'))
 for block_itr in range(len(filelist)):
     sequence_itr = 1
-    with open(filelist[block_itr],'r') as datafile:
+    with open(os.path.join(session,subj+'_block_'+str(block_itr+1)+'.csv'),'r') as datafile:
         reader = csv.reader(datafile)
         for row in reader:
             if row[1] == 'pause':
