@@ -30,7 +30,7 @@ def getRandomSequences(lengthOfSequences,sequencesPerBlock,cedrus_RB840):
         cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
         
     block_stim = []
-    block_stim.append(cue_positions[random.randrange(0,len(cue_positions)-1)])
+    block_stim.append(cue_positions[random.randrange(0,len(cue_positions))])
     for itr in range(lengthOfSequences*sequencesPerBlock-1):
         tmp=cue_positions[:]
         tmp.remove(block_stim[-1]) #Making sure there are no simple repeats.
@@ -149,20 +149,26 @@ Code for generating SRTT sequences with 6 visual cue positions corresponding to
 index, middle, or ring finger on either hand.
 grammar_type is either '8020' or '5050'.
 """
-def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,characterize_block,save_path,block_nbr,subject,cedrus_RB840):
+def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,characterize_block,save_path,block_nbr,subject,cedrus_RB840,nbrOfStartKeys):
     global cue_positions
     if cedrus_RB840:
         cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
-        start_stim = 'c'
+        if nbrOfStartKeys==1:
+            start_stim = ['c']
+        elif nbrOfStartKeys==2:
+            start_stim = ['c','f']
     else:
         cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
-        start_stim = 'f'
+        if nbrOfStartKeys==1:
+            start_stim = ['f']
+        elif nbrOfStartKeys==2:
+            start_stim = ['f', 'j']
       
     block_stim = []
     grammar = getGrammar(grammar_type)
     
     for seq_itr in range(sequencesPerBlock):
-        prev_element = start_stim
+        prev_element = random.choices(start_stim)[0]
         block_stim.append(prev_element)
         for stim_itr in range(lengthOfSequences-1):
             tmp_choice = random.choices(cue_positions, weights=grammar.iloc[cue_positions.index(prev_element)])[0]
@@ -175,5 +181,35 @@ def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,charact
     
     return block_stim
         
+    
+#%% Pregenerated Sequences for the generation task
+def getPreGeneratedSequences(nbrOfPreGenerated,grammar_type,cedrus_RB840,nbrOfStartKeys):
+    global cue_positions
+    if cedrus_RB840:
+        cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
+        if nbrOfStartKeys==1:
+            start_stim = ['c']
+        elif nbrOfStartKeys==2:
+            start_stim = ['c','f']
+    else:
+        cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
+        if nbrOfStartKeys==1:
+            start_stim = ['f']
+        elif nbrOfStartKeys==2:
+            start_stim = ['f', 'j']
+    
+    if grammar_type == 'random':
+        seq_stim = getRandomSequences(nbrOfPreGenerated, 1, cedrus_RB840)
+    else:
+        grammar = getGrammar(grammar_type)
+        seq_stim = []
+        prev_element = random.choices(start_stim)[0]
+        seq_stim.append(prev_element)
+        for stim_itr in range(nbrOfPreGenerated-1):
+            tmp_choice = random.choices(cue_positions, weights=grammar.iloc[cue_positions.index(prev_element)])[0]
+            seq_stim.append(tmp_choice)
+            prev_element = tmp_choice 
+    
+    return seq_stim
     
     

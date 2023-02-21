@@ -79,6 +79,7 @@ session = session[0]
 sequence_g = []
 genTime_g = []
 response_g = []
+pregenerated_g = []
 with open(os.path.join(session,subj+'_generation_grammatical.csv'),'r') as datafile:
     reader = csv.reader(datafile)
     for row in reader:
@@ -86,6 +87,8 @@ with open(os.path.join(session,subj+'_generation_grammatical.csv'),'r') as dataf
             sequence_g.append(int(row[1]))
             genTime_g.append(float(row[2]))
             response_g.append(row[3])
+            if len(row)>4:
+                pregenerated_g.append(row[4])
 
 #Calculate parameters
 cummulative_probability_g = []
@@ -144,6 +147,7 @@ triplet_frequencies_generated_g = {k: v / nbrOfPossibleTriplets for k, v in trip
 sequence_u = []
 genTime_u = []
 response_u = []
+pregenerated_u = []
 with open(os.path.join(session,subj+'_generation_random.csv'),'r') as datafile:
     reader = csv.reader(datafile)
     for row in reader:
@@ -151,6 +155,8 @@ with open(os.path.join(session,subj+'_generation_random.csv'),'r') as datafile:
             sequence_u.append(int(row[1]))
             genTime_u.append(float(row[2]))
             response_u.append(row[3])
+            if len(row)>4:
+                pregenerated_u.append(row[4])
 
 #Calculate parameters
 cummulative_probability_u = []
