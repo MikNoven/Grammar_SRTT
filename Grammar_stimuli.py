@@ -40,7 +40,12 @@ def getRandomSequences(lengthOfSequences,sequencesPerBlock,cedrus_RB840):
 
 
 #%% Grammars
-def getGrammar(grammar_type):
+def getGrammar(grammar_type,cedrus_RB840):
+    if cedrus_RB840:
+        cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
+    else:
+        cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
+    
     if grammar_type == '8020':
         trans_s = [0,0,0.8,0,0,0.2]
         trans_d = [0.2,0,0,0.8,0,0]
@@ -201,7 +206,7 @@ def getPreGeneratedSequences(nbrOfPreGenerated,grammar_type,cedrus_RB840,nbrOfSt
     if grammar_type == 'random':
         seq_stim = getRandomSequences(nbrOfPreGenerated, 1, cedrus_RB840)
     else:
-        grammar = getGrammar(grammar_type)
+        grammar = getGrammar(grammar_type,cedrus_RB840)
         seq_stim = []
         prev_element = random.choices(start_stim)[0]
         seq_stim.append(prev_element)

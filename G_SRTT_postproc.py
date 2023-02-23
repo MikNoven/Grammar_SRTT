@@ -62,19 +62,22 @@ def handShifted(prev,curr,allowed_keys):
     else:
         return curr in left_keys
 
+#%% Get sorted filelist
+def getBlockFilelist(session,subj):
+    tmp_filelist = glob.glob(os.path.join(session,subj+'_block_*.csv'))
+    filelist = ['']*len(tmp_filelist)
+    for file in tmp_filelist:
+        block_nbr=int(file[file.index('block_')+6:file.index('.csv')])
+        filelist[block_nbr-1] = file
+    
+    return filelist
+
 #%% Define paths and settings
 datapath='/Users/gdf724/Data/MovementGrammar/GrammarSRTT/'
-subj = 'HenrikC1'
-allowed_keys = ['a', 'b', 'c', 'f', 'g', 'h']
-start_keys = ['c'] #What keys are allowed start keys. 
-grammar_type = '8020' #or '5050'
-sequence_lengths = 8 #Number of elements in each sequence in the SRTT
-
+subj = 'HansC1'
 save_path = os.path.join(datapath,'PostProcessing',subj)
 
-grammar = gstim.getGrammar(grammar_type)
-
-#%% Read the data
+#%% Read the data and settings
 block = []
 trial = []
 RT = []
@@ -86,7 +89,31 @@ sequence = []
 session = glob.glob(os.path.join(datapath, subj+'*')) #For now assume all are in one session or that the number changes.
 session = session[0]
 
-filelist = glob.glob(os.path.join(session,subj+'_block_*.csv'))
+with open(os.path.join(session,'settings.txt'),'r') as settingsfile:
+    lines = settingsfile.readlines()
+
+for line in lines:
+    tmp_str = line[0:line.index(':')]
+    tmp_answ = line[line.index(':')+1:-1]
+    if tmp_str=='cedrus_RB840':
+        if tmp_answ=='True':
+            cedrus_RB840=True
+            allowed_keys = ['a', 'b', 'c', 'f', 'g', 'h']
+        else:
+            cedrus_RB840=False
+            allowed_keys = ['s', 'd', 'f', 'j', 'k', 'l']
+    if tmp_str=='lengthOfSequences':
+        sequence_lengths = int(tmp_answ)
+    if tmp_str=='grammar_type':
+        grammar_type = tmp_answ
+    if tmp_str=='nbrOfStartKeys':
+        nbrOfStartKeys=int(tmp_answ)
+        
+grammar = gstim.getGrammar(grammar_type,cedrus_RB840)
+start_keys = allowed_keys[2:2+nbrOfStartKeys]
+    
+filelist = getBlockFilelist(session,subj)
+
 for block_itr in range(len(filelist)):
     sequence_itr = 1
     with open(os.path.join(session,subj+'_block_'+str(block_itr+1)+'.csv'),'r') as datafile:
