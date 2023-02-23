@@ -95,17 +95,20 @@ else:
 
 #%% Define the paradigm. 
 #SRTT
-nbrOfBlocks = 4
+nbrOfBlocks = 15
 lengthOfSequences = 8 #Number of presses per sequence.
 sequencesPerBlock = 5
-pause_block_length = 5 #Pause between blocks length in seconds. 
+pause_block_length = 3 #Pause between blocks length in seconds. 
 pause_trial_length = 0.5 #Pause length for pause trials in seconds.
 nbrOfLongBreaks = 1 #Number of longer breaks that are gone through by button press. 
 grammar_type = '8020' #'8020', '5050', or 'random'
 nbrOfStartKeys = 2 #Can be 2 or 1 and alternates between [L3] and [L3,R1].
+do_SRTT = True #For debugging 
 #Generation task
 pregeneratedGenerationTask = 4 #How many of the elements should be pre-generated in the generation task. 0 for completely free generation.
+grammaticalPregenerated_randomGenTask = True #False if starting sequence should be random
 nbrOfGeneratedSequences = 3
+
 
 #%% Define save path
 save_path = '/Users/gdf724/Data/MovementGrammar/GrammarSRTT/' 
@@ -135,6 +138,7 @@ with open(os.path.join(savefolder,'settings.txt'),'w') as f:
     f.write('nbrOfStartKeys:'+str(nbrOfStartKeys)+'\n')
     f.write('pregeneratedGenerationTask:'+str(pregeneratedGenerationTask)+'\n')
     f.write('nbrOfGeneratedSequences:'+str(nbrOfGeneratedSequences)+'\n')
+    f.write('grammaticalPregenerated_randomGenTask:'+str(grammaticalPregenerated_randomGenTask)+'\n')
     
 
 #%% Initialize Window and make welcome screen.
@@ -155,175 +159,177 @@ if response[-1] in continue_keys:
 if 'escape' in response:
     controlled_e()
 
-#%%Warm up
-#Start with some interactive instructions. E.g. Generate s-d-f-j-k-l. Inform 
-#that participants need to be as quick and accurate as possible. 
-warmup_timings = []
-warmup_responses = []
 clock = core.Clock()
 
-for key in allowed_keys:
-    #Present correct instruction.
-    trial_stim = SimpleImageStim(win, image=img_paths[key])
-    trial_stim.draw()
-    win.flip()
-    t_wu_start = clock.getTime()
+if do_SRTT:
+    #%%Warm up
+    #Start with some interactive instructions. E.g. Generate s-d-f-j-k-l. Inform 
+    #that participants need to be as quick and accurate as possible. 
+    warmup_timings = []
+    warmup_responses = []
     
-    #Collect keypress. Right now only allows presses on the correct 
-    response = event.waitKeys(keyList=allowed_keys+['escape'], clearEvents = True)
-    if response[-1] in allowed_keys:
-        warmup_timings.append(clock.getTime()-t_wu_start)
-        warmup_responses.append(response[-1])
-        continue
-    elif response[-1]=='escape':
+    for key in allowed_keys:
+        #Present correct instruction.
+        trial_stim = SimpleImageStim(win, image=img_paths[key])
+        trial_stim.draw()
+        win.flip()
+        t_wu_start = clock.getTime()
+        
+        #Collect keypress. Right now only allows presses on the correct 
+        response = event.waitKeys(keyList=allowed_keys+['escape'], clearEvents = True)
+        if response[-1] in allowed_keys:
+            warmup_timings.append(clock.getTime()-t_wu_start)
+            warmup_responses.append(response[-1])
+            continue
+        elif response[-1]=='escape':
+            controlled_e()
+        
+    #%%Ready to start screen.
+    ready_string = "Great job!\nAre you ready to start the experiment?\nPress "+continue_key_name+" to continue"
+    ready_text = TextStim(win, ready_string, color=(1, 1, 1), colorSpace='rgb')
+    ready_text.draw()
+    win.flip()
+    #Wait until subject has pressed enter or escape
+    #kb = Keyboard()
+    response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents=True)
+    if response[-1] in continue_keys: 
+        pause_text = TextStim(win, "Wait", color=(1, 1, 1), colorSpace='rgb')
+        pause_text.draw()
+        win.flip()
+    if 'escape' in response:
         controlled_e()
     
-#%%Ready to start screen.
-ready_string = "Great job!\nAre you ready to start the experiment?\nPress "+continue_key_name+" to continue"
-ready_text = TextStim(win, ready_string, color=(1, 1, 1), colorSpace='rgb')
-ready_text.draw()
-win.flip()
-#Wait until subject has pressed enter or escape
-#kb = Keyboard()
-response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents=True)
-if response[-1] in continue_keys: 
-    pause_text = TextStim(win, "Wait", color=(1, 1, 1), colorSpace='rgb')
-    pause_text.draw()
-    win.flip()
-if 'escape' in response:
-    controlled_e()
-
-#%%Calculate number of blocks before longer break
-pause_indices = np.linspace(0,nbrOfBlocks,nbrOfLongBreaks+2)
-pause_indices = [round(x) for x in pause_indices[1:-1]]
-
-quarantine_presses_key = []
-quarantine_presses_RT = []
-quarantine_presses_correct = []
-quarantine_presses_block = []
-quarantine_presses_trial = []
-
-for block_itr in range(nbrOfBlocks):
-#%% Initialize the experiment.
-    #Get sequences for the block. (Separate class.)
-    if grammar_type == 'random':
-        block_trials = gstim.getRandomSequences(lengthOfSequences,sequencesPerBlock,cedrus_RB840)
-    else:
-        block_trials = gstim.getGrammarSequences(lengthOfSequences,sequencesPerBlock,\
-                                                 grammar_type,True,savefolder,block_itr+1,subj,cedrus_RB840,nbrOfStartKeys)
-    # Initialize data save structures.
-    block_RT = np.zeros(len(block_trials))
-    block_response = []
-    block_feedbackGiven = [] #Saves 1 if the subject was too slow or inaccurate.
-    block_accuracy = np.zeros(len(block_trials)) #To keep track of accuracy in the experiment.
+    #%%Calculate number of blocks before longer break
+    pause_indices = np.linspace(0,nbrOfBlocks,nbrOfLongBreaks+2)
+    pause_indices = [round(x) for x in pause_indices[1:-1]]
     
-
-#%%Run experiment block.
-    acc_check_skips = 0
-    for trial_itr in range(len(block_trials)):
-        trial = block_trials[trial_itr]
-        #Present correct stimulus + measure t_trial_init
-        if trial == 'pause':
-            trial_stim = SimpleImageStim(win, image='00.jpg')
-            trial_stim.draw()
-            win.flip()
-            block_RT[trial_itr] = np.nan
-            block_response.append(np.nan)
-            block_accuracy[trial_itr] = np.nan
-            core.wait(pause_trial_length)
-            if trial_itr >= 29:
-                msg_text = ""
-                acc_check = block_accuracy[trial_itr-20:trial_itr]
-                acc_check = acc_check[~np.isnan(acc_check)]
-                if np.nanmean(block_RT[trial_itr-10:trial_itr]) >= 0.8:
-                    msg_text = msg_text+"Too slow, please speed up.\n"
-                if sum(acc_check)/len(acc_check) < 0.7 and acc_check_skips==0:
-                    msg_text = msg_text+"Too many inaccuracies. Please pay attention.\n"
-                    acc_check_skips=20
-                if not msg_text=="":
-                    feedback_text = TextStim(win, msg_text, color=(1, 1, 1), colorSpace='rgb')
-                    block_feedbackGiven.append(1)
-                    feedback_text.draw()
-                    win.flip()
-                    core.wait(1.5)
+    quarantine_presses_key = []
+    quarantine_presses_RT = []
+    quarantine_presses_correct = []
+    quarantine_presses_block = []
+    quarantine_presses_trial = []
+    
+    for block_itr in range(nbrOfBlocks):
+    #%% Initialize the experiment.
+        #Get sequences for the block. (Separate class.)
+        if grammar_type == 'random':
+            block_trials = gstim.getRandomSequences(lengthOfSequences,sequencesPerBlock,cedrus_RB840)
         else:
-            t_init = clock.getTime()
-            trial_stim = SimpleImageStim(win, image=img_paths[trial])
-            trial_stim.draw()
-            win.flip()
-            #Collect response from the keyboard.
-            stop = False
-            while not stop:
-                response = event.getKeys(keyList=allowed_keys+['escape'])
-                if len(response)>0 and clock.getTime()-t_init <= 0.1:
-                    quarantine_presses_key.append(response[-1])
-                    quarantine_presses_RT.append(clock.getTime()-t_init)
-                    quarantine_presses_correct.append(trial)
-                    quarantine_presses_block.append(block_itr+1)
-                    quarantine_presses_trial.append(trial_itr+1)
-                elif len(response)>0 and response[-1] in allowed_keys:
-                    block_RT[trial_itr] = clock.getTime()-t_init
-                    block_response.append(response[-1])
-                    block_accuracy[trial_itr] = int(trial==response[-1])
-                    stop=True
-                elif len(response)>0 and response[-1]=='escape':
-                    controlled_e()
+            block_trials = gstim.getGrammarSequences(lengthOfSequences,sequencesPerBlock,\
+                                                     grammar_type,True,savefolder,block_itr+1,subj,cedrus_RB840,nbrOfStartKeys)
+        # Initialize data save structures.
+        block_RT = np.zeros(len(block_trials))
+        block_response = []
+        block_feedbackGiven = [] #Saves 1 if the subject was too slow or inaccurate.
+        block_accuracy = np.zeros(len(block_trials)) #To keep track of accuracy in the experiment.
+        
     
-            #After 30 trials, check that accuracy is above 95% and that average reaction time is below 450 ms. 
-            if acc_check_skips > 0:
-                acc_check_skips = acc_check_skips - 1
+    #%%Run experiment block.
+        acc_check_skips = 0
+        for trial_itr in range(len(block_trials)):
+            trial = block_trials[trial_itr]
+            #Present correct stimulus + measure t_trial_init
+            if trial == 'pause':
+                trial_stim = SimpleImageStim(win, image='00.jpg')
+                trial_stim.draw()
+                win.flip()
+                block_RT[trial_itr] = np.nan
+                block_response.append(np.nan)
+                block_accuracy[trial_itr] = np.nan
+                core.wait(pause_trial_length)
+                if trial_itr >= 29:
+                    msg_text = ""
+                    acc_check = block_accuracy[trial_itr-20:trial_itr]
+                    acc_check = acc_check[~np.isnan(acc_check)]
+                    if np.nanmean(block_RT[trial_itr-10:trial_itr]) >= 0.8:
+                        msg_text = msg_text+"Too slow, please speed up.\n"
+                    if sum(acc_check)/len(acc_check) < 0.7 and acc_check_skips==0:
+                        msg_text = msg_text+"Too many inaccuracies. Please pay attention.\n"
+                        acc_check_skips=20
+                    if not msg_text=="":
+                        feedback_text = TextStim(win, msg_text, color=(1, 1, 1), colorSpace='rgb')
+                        block_feedbackGiven.append(1)
+                        feedback_text.draw()
+                        win.flip()
+                        core.wait(1.5)
+            else:
+                t_init = clock.getTime()
+                trial_stim = SimpleImageStim(win, image=img_paths[trial])
+                trial_stim.draw()
+                win.flip()
+                #Collect response from the keyboard.
+                stop = False
+                while not stop:
+                    response = event.getKeys(keyList=allowed_keys+['escape'])
+                    if len(response)>0 and clock.getTime()-t_init <= 0.1:
+                        quarantine_presses_key.append(response[-1])
+                        quarantine_presses_RT.append(clock.getTime()-t_init)
+                        quarantine_presses_correct.append(trial)
+                        quarantine_presses_block.append(block_itr+1)
+                        quarantine_presses_trial.append(trial_itr+1)
+                    elif len(response)>0 and response[-1] in allowed_keys:
+                        block_RT[trial_itr] = clock.getTime()-t_init
+                        block_response.append(response[-1])
+                        block_accuracy[trial_itr] = int(trial==response[-1])
+                        stop=True
+                    elif len(response)>0 and response[-1]=='escape':
+                        controlled_e()
+        
+                #After 30 trials, check that accuracy is above 95% and that average reaction time is below 450 ms. 
+                if acc_check_skips > 0:
+                    acc_check_skips = acc_check_skips - 1
+                        
                     
-                
-    #Save block data and save to csv-file.
-    block_save = pd.DataFrame({'trial':block_trials,
-                               'reaction_time':block_RT,
-                               'response':block_response,
-                               'accuracy':block_accuracy}
-        )
-    block_save.to_csv(os.path.join(savefolder,subj+'_block_'+str(block_itr+1)+'.csv')) #Maybe save as pickle instead.
-    #Take a break
-    if block_itr < nbrOfBlocks-1:
-        if block_itr in pause_indices:
-            ready_string = "Great job!\nHave a short break.\nPress "+continue_key_name+" to continue"
-            ready_text = TextStim(win, ready_string, color=(1, 1, 1), colorSpace='rgb')
-            ready_text.draw()
-            win.flip()
-
-            response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents=True)
-            if response[-1] in continue_keys: 
-                pause_text = TextStim(win, "Wait", color=(1, 1, 1), colorSpace='rgb')
-                pause_text.draw()
+        #Save block data and save to csv-file.
+        block_save = pd.DataFrame({'trial':block_trials,
+                                   'reaction_time':block_RT,
+                                   'response':block_response,
+                                   'accuracy':block_accuracy}
+            )
+        block_save.to_csv(os.path.join(savefolder,subj+'_block_'+str(block_itr+1)+'.csv')) #Maybe save as pickle instead.
+        #Take a break
+        if block_itr < nbrOfBlocks-1:
+            if block_itr in pause_indices:
+                ready_string = "Great job!\nHave a short break.\nPress "+continue_key_name+" to continue"
+                ready_text = TextStim(win, ready_string, color=(1, 1, 1), colorSpace='rgb')
+                ready_text.draw()
                 win.flip()
-            if 'escape' in response:
-                controlled_e()
-        else:
-            pause_text="Great job! Take a "+str(pause_block_length)+" second break.\n"
-            for pause_itr in range(pause_block_length):
-                pause_stim = TextStim(win, pause_text+str(pause_itr+1)+"/"+str(pause_block_length), color=(1, 1, 1), colorSpace='rgb')
-                pause_stim.draw()
-                win.flip()
-                core.wait(1)
-
-#%% Save the quarantine presses
-quarantine_presses = pd.DataFrame({'response':quarantine_presses_key,
-                                   'reaction_time':quarantine_presses_RT,
-                                   'trial':quarantine_presses_correct,
-                                   'block':quarantine_presses_block,
-                                   'trialNbr':quarantine_presses_trial}
-                                  )
-quarantine_presses.to_csv(os.path.join(savefolder,subj+'_quarantine_presses.csv'))
-
-#%% End of SRTT message.
-end_text = "Great job! You are now done with this part of the experiment!\nPress "+continue_key_name+" to continue."
-end_stim = TextStim(win, end_text, color=(1, 1, 1), colorSpace='rgb')
-end_stim.draw()
-win.flip()
-response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents = True)
-if response[-1] in continue_keys:
-    print('SRTT done.')
-elif response[-1]=='escape':
-    controlled_e()
     
+                response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents=True)
+                if response[-1] in continue_keys: 
+                    pause_text = TextStim(win, "Wait", color=(1, 1, 1), colorSpace='rgb')
+                    pause_text.draw()
+                    win.flip()
+                if 'escape' in response:
+                    controlled_e()
+            else:
+                pause_text="Great job! Take a "+str(pause_block_length)+" second break.\n"
+                for pause_itr in range(pause_block_length):
+                    pause_stim = TextStim(win, pause_text+str(pause_itr+1)+"/"+str(pause_block_length), color=(1, 1, 1), colorSpace='rgb')
+                    pause_stim.draw()
+                    win.flip()
+                    core.wait(1)
+    
+    #%% Save the quarantine presses
+    quarantine_presses = pd.DataFrame({'response':quarantine_presses_key,
+                                       'reaction_time':quarantine_presses_RT,
+                                       'trial':quarantine_presses_correct,
+                                       'block':quarantine_presses_block,
+                                       'trialNbr':quarantine_presses_trial}
+                                      )
+    quarantine_presses.to_csv(os.path.join(savefolder,subj+'_quarantine_presses.csv'))
+    
+    #%% End of SRTT message.
+    end_text = "Great job! You are now done with this part of the experiment!\nPress "+continue_key_name+" to continue."
+    end_stim = TextStim(win, end_text, color=(1, 1, 1), colorSpace='rgb')
+    end_stim.draw()
+    win.flip()
+    response = event.waitKeys(keyList=continue_keys+['escape'], clearEvents = True)
+    if response[-1] in continue_keys:
+        print('SRTT done.')
+    elif response[-1]=='escape':
+        controlled_e()
+        
 #%%Generation task intialization.
 gentest_start_text = "In the previous part of the experiment,\nthe cues were presented in sequences\nthat came from a system.\nPress "+continue_key_name+" to continue."
 gentest_start_stim = TextStim(win, gentest_start_text, color=(1, 1, 1), colorSpace='rgb')
@@ -398,7 +404,6 @@ else:
                 gen_response.append(response[-1])
                 gen_seq[pregen_itr+lengthOfSequences*gen_itr] = gen_itr+1
                 gen_pregenerated[pregen_itr+lengthOfSequences*gen_itr] = 1
-                win.flip()
             elif response[-1]=='escape':
                 controlled_e()
         genStim = SimpleImageStim(win, image='00.jpg')
@@ -479,7 +484,11 @@ else:
         win.flip()
         core.wait(0.5)
         
-        pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,'random',cedrus_RB840,nbrOfStartKeys)
+        if grammaticalPregenerated_randomGenTask:
+            pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,grammar_type,cedrus_RB840,nbrOfStartKeys)
+        else:
+            pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,'random',cedrus_RB840,nbrOfStartKeys)
+            
         for pregen_itr in range(pregeneratedGenerationTask):
             genStim = SimpleImageStim(win, image=img_paths[pregen_seq[pregen_itr]])
             genStim.draw()
@@ -491,9 +500,11 @@ else:
                 gen_response.append(response[-1])
                 gen_seq[pregen_itr+lengthOfSequences*gen_itr] = gen_itr+1
                 gen_pregenerated[pregen_itr+lengthOfSequences*gen_itr] = 1
-                win.flip()
             elif response[-1]=='escape':
                 controlled_e()
+        genStim = SimpleImageStim(win, image='00.jpg')
+        genStim.draw()
+        win.flip()
         for seq_itr in range(lengthOfSequences-pregeneratedGenerationTask):
             t_init = clock.getTime()
             response = event.waitKeys(keyList=allowed_keys+['escape'], clearEvents = True)
@@ -506,7 +517,7 @@ else:
                 win.flip()
             elif response[-1]=='escape':
                 controlled_e()
- 
+                
 #Save the information. 
 gen_rand_save = pd.DataFrame({'sequence':gen_seq,
                            'generation_time':gen_time,
