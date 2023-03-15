@@ -73,7 +73,7 @@ grammar = gstim.getGrammar(grammar_type)
 
 #%% Grammatical sequences
 #Load data
-session = glob.glob(os.path.join(datapath, subj+'*')) #For now assume all are in one session or that the number changes.
+session = glob.glob(os.path.join(datapath, subj+'*'+'_generation')) #For now assume all are in one session or that the number changes.
 session = session[0]
 
 sequence_g = []

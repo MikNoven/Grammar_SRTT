@@ -86,7 +86,7 @@ accuracy = []
 sequence = []
 #trial,reaction_time,response,accuracy
 
-session = glob.glob(os.path.join(datapath, subj+'*')) #For now assume all are in one session or that the number changes.
+session = glob.glob(os.path.join(datapath, subj+'*'+'_learning')) #For now assume all are in one session or that the number changes.
 session = session[0]
 
 with open(os.path.join(session,'settings.txt'),'r') as settingsfile:

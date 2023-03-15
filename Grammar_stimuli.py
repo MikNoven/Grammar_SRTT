@@ -170,7 +170,7 @@ def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,charact
             start_stim = ['f', 'j']
       
     block_stim = []
-    grammar = getGrammar(grammar_type)
+    grammar = getGrammar(grammar_type,cedrus_RB840)
     
     for seq_itr in range(sequencesPerBlock):
         prev_element = random.choices(start_stim)[0]
@@ -216,5 +216,57 @@ def getPreGeneratedSequences(nbrOfPreGenerated,grammar_type,cedrus_RB840,nbrOfSt
             prev_element = tmp_choice 
     
     return seq_stim
+
+#%% Post-test sequences
+def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys):
+    global cue_positions
+    if cedrus_RB840:
+        cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
+        if nbrOfStartKeys==1:
+            start_stim = ['c']
+        elif nbrOfStartKeys==2:
+            start_stim = ['c','f']
+    else:
+        cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
+        if nbrOfStartKeys==1:
+            start_stim = ['f']
+        elif nbrOfStartKeys==2:
+            start_stim = ['f', 'j']
+      
+    block_stim = []
+    if seq_type=='20':
+        grammar = getGrammar('8020',cedrus_RB840)
+        grammar = grammar.replace([0.8], 0)
+    elif seq_type=='80':
+        grammar = getGrammar('8020',cedrus_RB840)
+        grammar = grammar.replace([0.2], 0)
+    elif seq_type=='50':
+        grammar = getGrammar('5050',cedrus_RB840) 
+    elif seq_type=='random':
+        adjacency_matrix = np.ones((len(cue_positions),len(cue_positions)))
+        grammar = pd.DataFrame(adjacency_matrix, columns=cue_positions, index=cue_positions)
+        
     
     
+    if seq_type=='random':
+        block_stim.append(cue_positions[random.randrange(0,len(cue_positions))])
+        for seq_itr in range(sequencesPerBlock):
+            block_stim.append(cue_positions[random.randrange(0,len(cue_positions))])
+            for itr in range(lengthOfSequences-1):
+                tmp=cue_positions[:]
+                tmp.remove(block_stim[-1]) #Making sure there are no simple repeats.
+                block_stim.append(tmp[random.randrange(0,len(cue_positions)-1)])
+            block_stim.append('pause')
+    else:
+        for seq_itr in range(sequencesPerBlock):
+            prev_element = random.choices(start_stim)[0]
+            block_stim.append(prev_element)
+            for stim_itr in range(lengthOfSequences-1):
+                tmp_choice = random.choices(cue_positions, weights=grammar.iloc[cue_positions.index(prev_element)])[0]
+                block_stim.append(tmp_choice)
+                prev_element = tmp_choice
+            block_stim.append('pause')
+        
+        
+    
+    return block_stim
