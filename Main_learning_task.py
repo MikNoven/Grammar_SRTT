@@ -103,6 +103,7 @@ pause_trial_length = 0.5 #Pause length for pause trials in seconds.
 nbrOfLongBreaks = 1 #Number of longer breaks that are gone through by button press. 
 grammar_type = '8020' #'8020', '5050', or 'random'
 nbrOfStartKeys = 2 #Can be 2 or 1 and alternates between [L3] and [L3,R1].
+begin_with_set_sequences = True
      
 #%% Define save path
 save_path = '/Users/gdf724/Data/MovementGrammar/GrammarSRTT/' 
@@ -204,6 +205,8 @@ for block_itr in range(nbrOfBlocks):
     #Get sequences for the block. (Separate class.)
     if grammar_type == 'random':
         block_trials = gstim.getRandomSequences(lengthOfSequences,sequencesPerBlock,cedrus_RB840)
+    elif grammar_type == '8020' and begin_with_set_sequences:
+        block_trials = gstim.getFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys)
     else:
         block_trials = gstim.getGrammarSequences(lengthOfSequences,sequencesPerBlock,\
                                                  grammar_type,True,savefolder,block_itr+1,subj,cedrus_RB840,nbrOfStartKeys)
