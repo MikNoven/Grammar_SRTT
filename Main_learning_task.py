@@ -131,6 +131,7 @@ with open(os.path.join(savefolder,'settings.txt'),'w') as f:
     f.write('nbrOfLongBreaks:'+str(nbrOfLongBreaks)+'\n')
     f.write('grammar_type:'+str(grammar_type)+'\n')
     f.write('nbrOfStartKeys:'+str(nbrOfStartKeys)+'\n')
+    f.write('begin_with_set_sequences:'+str(begin_with_set_sequences)+'\n')
 
 #%% Initialize Window and make welcome screen.
 welcome_string = "Welcome to the experiment!\nPut your fingers on the target keys on the keyboard.\nPlease press the indicated keys as quickly as possible.\nAre you ready to start?\nPress "+continue_key_name+" to continue"
