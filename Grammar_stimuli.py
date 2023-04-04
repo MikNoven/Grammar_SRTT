@@ -218,7 +218,7 @@ def getPreGeneratedSequences(nbrOfPreGenerated,grammar_type,cedrus_RB840,nbrOfSt
         seq_stim = []
         start_key = random.choices(start_stim)[0]
         seq_stim.append(start_key)
-        seq_stim.append(rndGrammarChoice(nbrOfPreGenerated, start_key, cue_positions, grammar))
+        seq_stim = [start_key] + rndGrammarChoice(nbrOfPreGenerated, start_key, cue_positions, grammar)
 
     return seq_stim
 
@@ -265,9 +265,7 @@ def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB8
     else:
         for seq_itr in range(sequencesPerBlock):
             start_key = random.choices(start_stim)[0]
-            block_stim.append(start_key)
-            block_stim.append(rndGrammarChoice(lengthOfSequences, start_key, cue_positions, grammar))
-            block_stim.append('pause')
+            block_stim = [start_key] + rndGrammarChoice(lengthOfSequences, start_key, cue_positions, grammar) + ['pause']
     
     return block_stim
 

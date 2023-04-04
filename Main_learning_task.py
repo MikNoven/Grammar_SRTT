@@ -299,7 +299,7 @@ for block_itr in range(nbrOfBlocks):
         else:
             pause_text="Great job! Take a "+str(pause_block_length)+" second break.\n"
             for pause_itr in range(pause_block_length):
-                pause_stim = TextStim(win, pause_text+str(pause_itr+1)+"/"+str(pause_block_length), color=(1, 1, 1), colorSpace='rgb')
+                pause_stim = SimpleImageStim(win, image='00.jpg')
                 pause_stim.draw()
                 win.flip()
                 core.wait(1)
