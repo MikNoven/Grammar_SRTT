@@ -104,7 +104,7 @@ nbrOfStartKeys = 2 #Can be 2 or 1 and alternates between [L3] and [L3,R1].
 pause_block_length = 3 #Pause between blocks length in seconds. 
 pause_trial_length = 0.5 #Pause length for pause trials in seconds.
 #Specify which post tests to do. random, 20, 80, 50. 
-post_test_versions = ['80'] 
+post_test_versions = ['20'] 
 
 #%% Define save path
 save_path = '/Users/gdf724/Data/MovementGrammar/GrammarSRTT/' 

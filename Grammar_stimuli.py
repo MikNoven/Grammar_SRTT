@@ -242,9 +242,11 @@ def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB8
     if seq_type=='20':
         grammar = getGrammar('8020',cedrus_RB840)
         grammar = grammar.replace([0.8], 0)
+        grammar = grammar.replace([0.2], 1)
     elif seq_type=='80':
         grammar = getGrammar('8020',cedrus_RB840)
         grammar = grammar.replace([0.2], 0)
+        grammar = grammar.replace([0.8], 1)
     elif seq_type=='50':
         grammar = getGrammar('5050',cedrus_RB840) 
     elif seq_type=='random':
@@ -265,7 +267,7 @@ def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB8
     else:
         for seq_itr in range(sequencesPerBlock):
             start_key = random.choices(start_stim)[0]
-            block_stim = [start_key] + rndGrammarChoice(lengthOfSequences, start_key, cue_positions, grammar) + ['pause']
+            block_stim = block_stim + [start_key] + rndGrammarChoice(lengthOfSequences, start_key, cue_positions, grammar) + ['pause']
     
     return block_stim
 
