@@ -230,13 +230,19 @@ def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB8
         if nbrOfStartKeys==1:
             start_stim = ['c']
         elif nbrOfStartKeys==2:
-            start_stim = ['c','f']
+            if seq_type=='20':
+                start_stim = ['c', 'h']
+            else:
+                start_stim = ['c','f']
     else:
         cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
         if nbrOfStartKeys==1:
             start_stim = ['f']
         elif nbrOfStartKeys==2:
-            start_stim = ['f', 'j']
+            if seq_type=='20':
+                start_stim = ['f', 'l']
+            else:
+                start_stim = ['f', 'j']
       
     block_stim = []
     if seq_type=='20':
