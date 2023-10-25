@@ -40,19 +40,27 @@ def getRandomSequences(lengthOfSequences,sequencesPerBlock,cedrus_RB840):
 
 
 #%% Grammars
-def getGrammar(grammar_type,cedrus_RB840):
+def getGrammar(grammar_type,cedrus_RB840,grammar_version):
     if cedrus_RB840:
         cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
     else:
         cue_positions = ['s', 'd', 'f', 'j', 'k', 'l']
     
     if grammar_type == '8020':
-        trans_s = [0,0,0.8,0,0,0.2]
-        trans_d = [0.2,0,0,0.8,0,0]
-        trans_f = [0,0.8,0,0,0.2,0]
-        trans_j = [0,0,0.2,0,0,0.8]
-        trans_k = [0.8,0,0,0.2,0,0]
-        trans_l = [0,0.2,0,0,0.8,0]
+        if grammar_version == 'a':
+            trans_s = [0,0,0.8,0,0,0.2]
+            trans_d = [0.2,0,0,0.8,0,0]
+            trans_f = [0,0.8,0,0,0.2,0]
+            trans_j = [0,0,0.2,0,0,0.8]
+            trans_k = [0.8,0,0,0.2,0,0]
+            trans_l = [0,0.2,0,0,0.8,0]
+        elif grammar_version == 'b':
+            trans_s = [0,0,0.2,0,0,0.8]
+            trans_d = [0.8,0,0,0.2,0,0]
+            trans_f = [0,0.2,0,0,0.8,0]
+            trans_j = [0,0,0.8,0,0,0.2]
+            trans_k = [0.2,0,0,0.8,0,0]
+            trans_l = [0,0.8,0,0,0.2,0]
     elif grammar_type == '5050':
         trans_s = [0,0,0.5,0,0,0.5]
         trans_d = [0.5,0,0,0.5,0,0]
@@ -165,7 +173,7 @@ Code for generating SRTT sequences with 6 visual cue positions corresponding to
 index, middle, or ring finger on either hand.
 grammar_type is either '8020' or '5050'.
 """
-def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,characterize_block,save_path,block_nbr,subject,cedrus_RB840,nbrOfStartKeys):
+def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,characterize_block,save_path,block_nbr,subject,cedrus_RB840,nbrOfStartKeys,grammar_version):
     global cue_positions
     if cedrus_RB840:
         cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
@@ -181,7 +189,7 @@ def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,charact
             start_stim = ['f', 'j']
       
     block_stim = []
-    grammar = getGrammar(grammar_type,cedrus_RB840)
+    grammar = getGrammar(grammar_type,cedrus_RB840,grammar_version)
     
     for seq_itr in range(sequencesPerBlock):
         start_key = random.choices(start_stim)[0]
@@ -196,7 +204,7 @@ def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,charact
         
     
 #%% Pregenerated Sequences for the generation task
-def getPreGeneratedSequences(nbrOfPreGenerated,grammar_type,cedrus_RB840,nbrOfStartKeys):
+def getPreGeneratedSequences(nbrOfPreGenerated,grammar_type,cedrus_RB840,nbrOfStartKeys,grammar_version):
     global cue_positions
     if cedrus_RB840:
         cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
@@ -214,7 +222,7 @@ def getPreGeneratedSequences(nbrOfPreGenerated,grammar_type,cedrus_RB840,nbrOfSt
     if grammar_type == 'random':
         seq_stim = getRandomSequences(nbrOfPreGenerated, 1, cedrus_RB840)
     else:
-        grammar = getGrammar(grammar_type,cedrus_RB840)
+        grammar = getGrammar(grammar_type,cedrus_RB840,grammar_version)
         seq_stim = []
         start_key = random.choices(start_stim)[0]
         seq_stim.append(start_key)
@@ -223,7 +231,7 @@ def getPreGeneratedSequences(nbrOfPreGenerated,grammar_type,cedrus_RB840,nbrOfSt
     return seq_stim
 
 #%% Post-test sequences
-def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys):
+def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys,grammar_version):
     global cue_positions
     if cedrus_RB840:
         cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
@@ -246,15 +254,15 @@ def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB8
       
     block_stim = []
     if seq_type=='20':
-        grammar = getGrammar('8020',cedrus_RB840)
+        grammar = getGrammar('8020',cedrus_RB840,grammar_version)
         grammar = grammar.replace([0.8], 0)
         grammar = grammar.replace([0.2], 1)
     elif seq_type=='80':
-        grammar = getGrammar('8020',cedrus_RB840)
+        grammar = getGrammar('8020',cedrus_RB840,grammar_version)
         grammar = grammar.replace([0.2], 0)
         grammar = grammar.replace([0.8], 1)
     elif seq_type=='50':
-        grammar = getGrammar('5050',cedrus_RB840) 
+        grammar = getGrammar('5050',cedrus_RB840,grammar_version) 
     elif seq_type=='random':
         adjacency_matrix = np.ones((len(cue_positions),len(cue_positions)))
         grammar = pd.DataFrame(adjacency_matrix, columns=cue_positions, index=cue_positions)
@@ -278,7 +286,7 @@ def getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB8
     return block_stim
 
 #%% Generate starting block that is guaranteed to include 20% transitions
-def generateFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys,gramScore_limits):
+def generateFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys,gramScore_limits,grammar_version):
     
     if cedrus_RB840:
         cue_positions = ['a', 'b', 'c', 'f', 'g', 'h']
@@ -294,7 +302,7 @@ def generateFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrO
             start_stim = ['f', 'j']
             
     block_stim = []
-    grammar = getGrammar('8020',cedrus_RB840)
+    grammar = getGrammar('8020',cedrus_RB840,grammar_version)
     for seq_itr in range(sequencesPerBlock):
         start_key = random.choices(start_stim)[0]
         tmp_seq = rndGrammarChoice(lengthOfSequences, start_key, cue_positions, grammar)
@@ -302,16 +310,18 @@ def generateFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrO
         while not tmp_GramScore > gramScore_limits[0] and not tmp_GramScore < gramScore_limits[1]:
             tmp_seq = rndGrammarChoice(lengthOfSequences, start_key, cue_positions, grammar)
             tmp_GramScore = calcGramScore_seq(tmp_seq, grammar)
-        block_stim.append(start_key)
-        block_stim.append(tmp_seq)
+        #block_stim.append(start_key)
+        #block_stim.append(tmp_seq[0])
+        #block_stim.append('pause')
+        block_stim = block_stim + [start_key] + tmp_seq 
         block_stim.append('pause')
-    
+        
     return block_stim
 
 #%% Get predefined block guaranteed to include 20% transitions
-def getFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys):
+def getFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys,grammar_version):
     #Assume that the sequence is saved in the code folder and saved in the following logic.
-    filename='seqlen'+str(lengthOfSequences)+'seqperblock'+str(sequencesPerBlock)+'startkeys'+str(nbrOfStartKeys)+'.txt'
+    filename='seqlen'+str(lengthOfSequences)+'seqperblock'+str(sequencesPerBlock)+'startkeys'+str(nbrOfStartKeys)+'version'+grammar_version+'.txt'
     
     with open((filename),'r') as f:
         block_stim_tmp=f.readlines()

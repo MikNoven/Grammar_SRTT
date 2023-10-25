@@ -63,10 +63,10 @@ def make_savefolder(save_path, subj):
 
 
 #%% Define the hardware
-cedrus_RB840 = False #Whether to use Cedrus or keyboard. (affects which buttons to use.)
+cedrus_RB840 = True #Whether to use Cedrus or keyboard. (affects which buttons to use.)
 mon = monitors.Monitor('SonyG55')
-mon.setSizePix((2560,1600))
-winsize=(1080,720)
+mon.setSizePix((1920,1080))
+winsize=(1920,1080)
 
 if cedrus_RB840:
     allowed_keys = ['a', 'b', 'c', 'f', 'g', 'h']
@@ -94,17 +94,17 @@ else:
         }
 
 #%% Define the paradigm.  
-grammar_type = '8020' #'8020', '5050', or 'random'
+grammar_type = '5050' #'8020', '5050', or 'random'
 nbrOfStartKeys = 2 #Can be 2 or 1 and alternates between [L3] and [L3,R1].
 #Generation task
 lengthOfSequences = 8 #Number of presses per sequence.
-pregeneratedGenerationTask = 4 #How many of the elements should be pre-generated in the generation task. 0 for completely free generation.
+pregeneratedGenerationTask = 3 #How many of the elements should be pre-generated in the generation task. 0 for completely free generation.
 grammaticalPregenerated_randomGenTask = True #False if starting sequence should be random
-nbrOfGeneratedSequences = 3
+nbrOfGeneratedSequences = 4
 
 
 #%% Define save path
-save_path = '/Users/gdf724/Data/MovementGrammar/GrammarSRTT/' 
+save_path = 'C:\\Users\\isaki\\Documents\\Skole\\Bachelor\\Grammar_SRTT-main' 
 
 #%% Gather subject information and make sure that the subject name is set and make a save folder.
 loop_subjDial=True
