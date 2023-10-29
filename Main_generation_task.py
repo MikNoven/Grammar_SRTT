@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Mar  6 19:13:48 2023
-Separate generation task. ä
+Separate generation task. 
 @author: gdf724
 """
 #%% Import necessary packages.
@@ -63,7 +63,7 @@ def make_savefolder(save_path, subj):
 
 
 #%% Define the hardware
-cedrus_RB840 = True #Whether to use Cedrus or keyboard. (affects which buttons to use.)
+cedrus_RB840 = False #Whether to use Cedrus or keyboard. (affects which buttons to use.)
 mon = monitors.Monitor('SonyG55')
 mon.setSizePix((1920,1080))
 winsize=(1920,1080)
@@ -95,6 +95,7 @@ else:
 
 #%% Define the paradigm.  
 grammar_type = '5050' #'8020', '5050', or 'random'
+grammar_version = 'a' #Doesn't matter
 nbrOfStartKeys = 2 #Can be 2 or 1 and alternates between [L3] and [L3,R1].
 #Generation task
 lengthOfSequences = 8 #Number of presses per sequence.
@@ -192,7 +193,7 @@ else:
         gen_seq_text_stim.draw()
         win.flip()
         core.wait(0.5)
-        pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,grammar_type,cedrus_RB840,nbrOfStartKeys)
+        pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,grammar_type,cedrus_RB840,nbrOfStartKeys,grammar_version)
         for pregen_itr in range(pregeneratedGenerationTask):
             genStim = SimpleImageStim(win, image=img_paths[pregen_seq[pregen_itr]])
             genStim.draw()
@@ -285,9 +286,9 @@ else:
         core.wait(0.5)
         
         if grammaticalPregenerated_randomGenTask:
-            pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,grammar_type,cedrus_RB840,nbrOfStartKeys)
+            pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,grammar_type,cedrus_RB840,nbrOfStartKeys,grammar_version)
         else:
-            pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,'random',cedrus_RB840,nbrOfStartKeys)
+            pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,'random',cedrus_RB840,nbrOfStartKeys,grammar_version)
             
         for pregen_itr in range(pregeneratedGenerationTask):
             genStim = SimpleImageStim(win, image=img_paths[pregen_seq[pregen_itr]])

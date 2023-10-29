@@ -104,9 +104,10 @@ nbrOfLongBreaks = 2 #Number of longer breaks that are gone through by button pre
 nbrOfStartKeys = 2 #Can be 2 or 1 and alternates between [L3] and [L3,R1].
 begin_with_set_sequences = True
 
+
 #%% Define grammar!
-grammar_type = '8020' #'8020', '8020', '5050', or 'random'
-grammar_version = 'a' #'a' or 'b'
+grammar_type = '5050' #'8020', '8020', '5050', or 'random'
+grammar_version = 'b' #'a' or 'b'
      
 #%% Define save path
 save_path = 'C:\\Users\\isaki\\Documents\\Skole\\Bachelor\\Grammar_SRTT-main' 

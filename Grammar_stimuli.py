@@ -194,7 +194,7 @@ def getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,charact
     for seq_itr in range(sequencesPerBlock):
         start_key = random.choices(start_stim)[0]
         block_stim.append(start_key)
-        block_stim.append(rndGrammarChoice(lengthOfSequences, start_key, cue_positions, grammar))
+        block_stim = block_stim + rndGrammarChoice(lengthOfSequences, start_key, cue_positions, grammar)
         block_stim.append('pause')
     
     if characterize_block:
@@ -323,9 +323,12 @@ def getFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStar
     #Assume that the sequence is saved in the code folder and saved in the following logic.
     filename='seqlen'+str(lengthOfSequences)+'seqperblock'+str(sequencesPerBlock)+'startkeys'+str(nbrOfStartKeys)+'version'+grammar_version+'.txt'
     
-    with open((filename),'r') as f:
-        block_stim_tmp=f.readlines()
-    
-    block_stim = [x.replace('\n','') for x in block_stim_tmp]
+    if not os.path.exists(filename):
+        block_stim = generateFixed8020Block(lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys,(4.5,6),grammar_version)
+    else:
+        with open((filename),'r') as f:
+            block_stim_tmp=f.readlines()
+        
+        block_stim = [x.replace('\n','') for x in block_stim_tmp]
     
     return block_stim

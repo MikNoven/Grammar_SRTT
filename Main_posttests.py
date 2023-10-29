@@ -179,7 +179,7 @@ for block_itr in range(nbrOfBlocks*len(post_test_versions)):
     if seq_type == 'grammatical':
         block_trials = gstim.getGrammarSequences(lengthOfSequences,sequencesPerBlock,grammar_type,False,save_path,0,subj,cedrus_RB840,nbrOfStartKeys,grammar_version)
     elif seq_type == 'random':
-        block_trials = gstim.getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys)
+        block_trials = gstim.getPostTestSequences(seq_type,lengthOfSequences,sequencesPerBlock,cedrus_RB840,nbrOfStartKeys,grammar_version)
 
     # Initialize data save structures.
     block_RT = np.zeros(len(block_trials))
