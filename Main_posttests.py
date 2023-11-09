@@ -17,7 +17,7 @@ import Grammar_stimuli as gstim
 from datetime import date
 import pandas as pd
 import random
-
+from numpy import nan
 
 #%% Get subject dialog box
 def subject_dialog(title_text):
@@ -129,7 +129,7 @@ with open(os.path.join(savefolder,'settings.txt'),'w') as f:
     f.write('subject:'+str(subj)+'\n')
     f.write('cedrus_RB840:'+str(cedrus_RB840)+'\n')
     f.write('grammar_type:'+str(grammar_type)+'\n')
-    f.write('grammar_version:'+str(grammar_version)+'\n')    
+    f.write('d:'+str(grammar_version)+'\n')    
     f.write('nbrOfStartKeys:'+str(nbrOfStartKeys)+'\n')
     f.write('lengthOfSequences:'+str(lengthOfSequences)+'\n')
     f.write('sequencesPerBlock:'+str(sequencesPerBlock)+'\n')
@@ -186,7 +186,7 @@ for block_itr in range(nbrOfBlocks*len(post_test_versions)):
     block_response = []
     block_feedbackGiven = [] #Saves 1 if the subject was too slow or inaccurate.
     block_accuracy = np.zeros(len(block_trials)) #To keep track of accuracy in the experiment.
-    
+    block_seq_type = []
 
 #%%Run experiment block.
     acc_check_skips = 0
@@ -200,6 +200,7 @@ for block_itr in range(nbrOfBlocks*len(post_test_versions)):
             block_RT[trial_itr] = np.nan
             block_response.append(np.nan)
             block_accuracy[trial_itr] = np.nan
+            block_seq_type.append(nan)
             core.wait(pause_trial_length)
             if trial_itr >= 29:
                 msg_text = ""
@@ -235,6 +236,7 @@ for block_itr in range(nbrOfBlocks*len(post_test_versions)):
                     block_RT[trial_itr] = clock.getTime()-t_init
                     block_response.append(response[-1])
                     block_accuracy[trial_itr] = int(trial==response[-1])
+                    block_seq_type.append(seq_type)
                     stop=True
                 elif len(response)>0 and response[-1]=='escape':
                     controlled_e()
@@ -248,7 +250,8 @@ for block_itr in range(nbrOfBlocks*len(post_test_versions)):
     block_save = pd.DataFrame({'trial':block_trials,
                                'reaction_time':block_RT,
                                'response':block_response,
-                               'accuracy':block_accuracy}
+                               'accuracy':block_accuracy,
+                               'sequence_type':block_seq_type}
         )
     block_save.to_csv(os.path.join(savefolder,subj+'_block_'+str(block_itr+1)+'.csv')) #Maybe save as pickle instead.
     #Take a break

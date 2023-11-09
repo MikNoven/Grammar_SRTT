@@ -95,7 +95,7 @@ else:
 
 #%% Define the paradigm.  
 grammar_type = '5050' #'8020', '5050', or 'random'
-grammar_version = 'a' #Doesn't matter
+grammar_version = 'a' 
 nbrOfStartKeys = 2 #Can be 2 or 1 and alternates between [L3] and [L3,R1].
 #Generation task
 lengthOfSequences = 8 #Number of presses per sequence.
@@ -124,6 +124,7 @@ with open(os.path.join(savefolder,'settings.txt'),'w') as f:
     f.write('cedrus_RB840:'+str(cedrus_RB840)+'\n')
     f.write('lengthOfSequences:'+str(lengthOfSequences)+'\n')
     f.write('grammar_type:'+str(grammar_type)+'\n')
+    f.write('grammar_version:'+str(grammar_version)+'\n')
     f.write('nbrOfStartKeys:'+str(nbrOfStartKeys)+'\n')
     f.write('pregeneratedGenerationTask:'+str(pregeneratedGenerationTask)+'\n')
     f.write('nbrOfGeneratedSequences:'+str(nbrOfGeneratedSequences)+'\n')
@@ -193,7 +194,7 @@ else:
         gen_seq_text_stim.draw()
         win.flip()
         core.wait(0.5)
-        pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,grammar_type,cedrus_RB840,nbrOfStartKeys,grammar_version)
+        pregen_seq = gstim.getPreGeneratedSequences(pregeneratedGenerationTask,'5050',cedrus_RB840,nbrOfStartKeys,grammar_version)
         for pregen_itr in range(pregeneratedGenerationTask):
             genStim = SimpleImageStim(win, image=img_paths[pregen_seq[pregen_itr]])
             genStim.draw()

@@ -73,14 +73,14 @@ def getBlockFilelist(session,subj):
     return filelist
 
 #%% Define paths and settings
-datapath='/Users/gdf724/Data/MovementGrammar/AGIL/'
+datapath='/Users/gdf724/Data/MovementGrammar/GrammarSRTT/'
 #subj = 'HansC1'
-list_of_subjs = ['ID1', 'ID2', 'ID3', 'ID4', 'ID5', 'ID6', 'ID7', 'ID9', 'ID10', 'ID11', 'ID12']
+list_of_subjs = ['ID13','ID14','ID15']
 
 for subj in list_of_subjs:
     save_path = os.path.join(datapath,'PostProcessing',subj)
     
-    sessions = glob.glob(os.path.join(datapath, subj, subj+'*'+'_learning/')) #For now assume all are in one session or that the number changes.
+    sessions = glob.glob(os.path.join(datapath, subj, subj+'*'+'_learning')) #For now assume all are in one session or that the number changes.
     for session in sessions:
         #%% Read the data and settings
         block = []
@@ -109,10 +109,12 @@ for subj in list_of_subjs:
                 sequence_lengths = int(tmp_answ)
             if tmp_str=='grammar_type':
                 grammar_type = tmp_answ
+            if tmp_str=='grammar_version':
+                grammar_version = tmp_answ
             if tmp_str=='nbrOfStartKeys':
                 nbrOfStartKeys=int(tmp_answ)
                 
-        grammar = gstim.getGrammar(grammar_type,cedrus_RB840)
+        grammar = gstim.getGrammar(grammar_type,cedrus_RB840,grammar_version)
         start_keys = allowed_keys[2:2+nbrOfStartKeys]
             
         filelist = getBlockFilelist(session,subj)
